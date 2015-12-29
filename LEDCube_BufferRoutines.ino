@@ -18,16 +18,15 @@
 //#    along with LEDCube.  If not, see <http://www.gnu.org/licenses/>.         #
 //###############################################################################
 //# Description:                                                                #
-//#    This software is written for the Arduino UNO hardware along with the     #
-//#    ICStation LED cube shield. It controls an 4x4x4 LED cube.                #
+//#                                                                             #
 //#   Y                                                                         #
 //#  /         C3---C7---C11--C15    Anode connections:                         #
 //#  --X       /    /    /    / |    C0-C15: Q outputs of 74HC595s              #
 //# |        C2---C6---C10--C14 @                                               #
-//# Z    L0  /    /    /    / |/|    74HC595 control:                           #
+//# Z        /    /    /    / |/|    74HC595 control:                           #
 //#        C1---C5---C9---C13 @ @    DS (serial data input):         3 (PD3)    #
 //#        /    /    /    / |/|/|    OE (output enable, active low): 2 (PD2)    #
-//#      C0---C4---C8---C12 @ @ @    ST (storage clock):             1 (PD1)    #
+//#  L0  C0---C4---C8---C12 @ @ @    ST (storage clock):             1 (PD1)    #
 //#       |    |    |    | /|/|/     SH (shift clock):               0 (PD0)    #
 //#  L1  C0---C4---C8---C12 @ @                                                 #
 //#       |    |    |    | /|/       Cathode connections:                       #
@@ -36,10 +35,10 @@
 //#  L3  C0---C4---C8---C12          L2: 6 (PD6)                                #
 //#                                  L3: 7 (PD7)                                #
 //#                                                                             #
-//#    Buffer format:                                                           #                                                                             #
-//# Column:  C15 C14 C13 C12 C11 C10 C9  C8  C7  C6  C5  C4  C3  C2  C1  C0     #                                                                   #
-//# Level:  3210321032103210321032103210321032103210321032103210321032103210    #                                                                   #                                                                             #
-//# Index:  |15||14||13||12||11||10|| 9|| 8|| 7|| 6|| 5|| 4|| 3|| 2|| 1|| 0|    #                                                                  #
+//#    Buffer format:                                                           #
+//# Column:  C15 C14 C13 C12 C11 C10 C9  C8  C7  C6  C5  C4  C3  C2  C1  C0     #
+//# Level:  3210321032103210321032103210321032103210321032103210321032103210    #
+//# Index:  |15||14||13||12||11||10|| 9|| 8|| 7|| 6|| 5|| 4|| 3|| 2|| 1|| 0|    #
 //#                                                                             #
 //###############################################################################
 //# Version History:                                                            #
