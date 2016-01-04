@@ -1,7 +1,7 @@
 //###############################################################################
 //# LEDCube - Main                                                              #
 //###############################################################################
-//#    Copyright 2015 Dirk Heisswolf                                            #
+//#    Copyright 2015 - 2016 Dirk Heisswolf                                     #
 //#    This file is part of the LEDCube project.                                #
 //#                                                                             #
 //#    LEDCube is free software: you can redistribute it and/or modify          #
@@ -35,21 +35,48 @@
 //#  L3  C0---C4---C8---C12          L2: 6 (PD6)                                #
 //#                                  L3: 7 (PD7)                                #
 //#                                                                             #
-//#    Buffer format:                                                           #
-//# Column:  C15 C14 C13 C12 C11 C10 C9  C8  C7  C6  C5  C4  C3  C2  C1  C0     #
-//# Level:  3210321032103210321032103210321032103210321032103210321032103210    #
-//# Index:  |15||14||13||12||11||10|| 9|| 8|| 7|| 6|| 5|| 4|| 3|| 2|| 1|| 0|    #
+//# Buffer format:                                                              #
+//#   Array of 16 bytes. The index of the array corresponds to the column       #
+//#   number. The upper 4-bits of each byte correspond to the LEDs in each      #
+//#   column:    7  6  5  4  3  2  1  0                                         #
+//#            +--+--+--+--+--+--+--+--+                                        #
+//#            |L3|L2|L1|L0|   unused  |                                        #
+//#            +--+--+--+--+--+--+--+--+                                        #
 //#                                                                             #
 //###############################################################################
 //# Version History:                                                            #
-//#    November30, 2015                                                         #
+//#    November 30, 2015                                                        #
 //#      - Initial release                                                      #
 //###############################################################################
 
+// Variables
+//==========
+// Global variables
+byte      buffer[16]           = {0, 0, 0, 0,
+	     	               	  0, 0, 0, 0,
+	  	               	  0, 0, 0, 0,
+	  	               	  0, 0, 0, 0};
+
 // Setup routine
+//==============
 void setup() {
+     //Disable interrupts until setup is complete
+     noInterrupts();
+
+     //Setup driver
+     setupDriver();
+
+     //Enable interrupts
+     // disable all interrupts
 }
 
 // Application loop
+//=================
 void loop() {
+
+
+
+
+
+
 }
