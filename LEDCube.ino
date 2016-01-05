@@ -35,27 +35,40 @@
 //#  L3  C0---C4---C8---C12          L2: 6 (PD6)                                #
 //#                                  L3: 7 (PD7)                                #
 //#                                                                             #
-//# Buffer format:                                                              #
-//#   Array of 16 bytes. The index of the array corresponds to the column       #
-//#   number. The upper 4-bits of each byte correspond to the LEDs in each      #
-//#   column:    7  6  5  4  3  2  1  0                                         #
-//#            +--+--+--+--+--+--+--+--+                                        #
-//#            |L3|L2|L1|L0|   unused  |                                        #
-//#            +--+--+--+--+--+--+--+--+                                        #
-//#                                                                             #
 //###############################################################################
 //# Version History:                                                            #
 //#    November 30, 2015                                                        #
 //#      - Initial release                                                      #
 //###############################################################################
 
-// Variables
-//==========
-// Global variables
-byte      buffer[16]           = {0, 0, 0, 0,
-	     	               	  0, 0, 0, 0,
-	  	               	  0, 0, 0, 0,
-	  	               	  0, 0, 0, 0};
+// General definitions
+//====================
+const int columnCount       = 16;
+const int levelCount        =  4;
+
+// Pin definitions
+//================
+const byte PL3               = 7;        //level 3                   7 (PD7)
+const byte PL2               = 6;        //level 2                   6 (PD6)
+const byte PL1               = 5;        //level 1                   5 (PD5)
+const byte PL0               = 4;        //level 0                   4 (PD4)
+
+const byte PDS               = 3;        //serial data input         3 (PD3)
+const byte POE               = 2;        //output enable, active low 2 (PD2)
+const byte PST               = 1;        //storage clock             1 (PD1)
+const byte PSH               = 0;        //shift clock               0 (PD0)
+
+// Bit definitions
+//================
+const byte L3                = (1 << PL3);
+const byte L2                = (1 << PL2);
+const byte L1                = (1 << PL1);
+const byte L0                = (1 << PL0);
+
+const byte DS                = (1 << PDS);
+const byte OE                = (1 << POE);
+const byte ST                = (1 << PST);
+const byte SH                = (1 << PSH);
 
 // Setup routine
 //==============
@@ -63,20 +76,23 @@ void setup() {
      //Disable interrupts until setup is complete
      noInterrupts();
 
-     //Setup driver
-     setupDriver();
+     //Display routines
+     dispSetup();
+
+     //Sketch routines
+     sketSetup();
 
      //Enable interrupts
-     // disable all interrupts
+     interrupts();
 }
 
 // Application loop
 //=================
 void loop() {
 
+  //Set sketch buffer
+  sketBuffer[]  = {0x12, 0x34, 0x56, 0x78, 0X9A, 0XBC, 0XDE, 0xF0}; //set sketBuffer
 
-
-
-
-
+  //wait for frame boundary
+  dispNextFrame();
 }
