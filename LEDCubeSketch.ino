@@ -69,8 +69,6 @@ byte      sketBuffer[8]      = {0, 0, 0, 0, 0, 0, 0, 0};
 // Setup routine
 //==============
 void sketSetup() {
-  //Clear sketBuffer
-  sketClrBuf();
 }
 
 // Pixel operations
@@ -159,12 +157,26 @@ boolean sketTstLev(byte level) {
 //==================
 //Set all pixels
 void sketSetBuf() {
-  sketBuffer[]  = {0xFF, 0xFF, 0xFF, 0xFF, 0XFF, 0XFF, 0XFF, 0xFF}; //set sketBuffer
+  sketBuffer[0] = 0xFF;
+  sketBuffer[1] = 0xFF;
+  sketBuffer[2] = 0xFF;
+  sketBuffer[3] = 0xFF;
+  sketBuffer[4] = 0xFF;
+  sketBuffer[5] = 0xFF;
+  sketBuffer[6] = 0xFF;
+  sketBuffer[7] = 0xFF;
 }
 
 //Clear all pixels
 void sketClrBuf() {
-    sketBuffer[]  = {0, 0, 0, 0, 0, 0, 0, 0}; //clear sketBuffer
+  sketBuffer[0] = 0;
+  sketBuffer[1] = 0;
+  sketBuffer[2] = 0;
+  sketBuffer[3] = 0;
+  sketBuffer[4] = 0;
+  sketBuffer[5] = 0;
+  sketBuffer[6] = 0;
+  sketBuffer[7] = 0;
 }
 
 //Invert all pixels

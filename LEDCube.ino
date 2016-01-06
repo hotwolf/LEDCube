@@ -70,6 +70,11 @@ const byte OE                = (1 << POE);
 const byte ST                = (1 << PST);
 const byte SH                = (1 << PSH);
 
+// Variables
+//==========
+//Skeich buffer
+extern byte sketBuffer[];
+
 // Setup routine
 //==============
 void setup() {
@@ -80,7 +85,7 @@ void setup() {
      dispSetup();
 
      //Sketch routines
-     sketSetup();
+     //sketSetup();
 
      //Enable interrupts
      interrupts();
@@ -91,7 +96,14 @@ void setup() {
 void loop() {
 
   //Set sketch buffer
-  sketBuffer[]  = {0x12, 0x34, 0x56, 0x78, 0X9A, 0XBC, 0XDE, 0xF0}; //set sketBuffer
+  sketBuffer[0]  = 0x01;
+  sketBuffer[1]  = 0x23;
+  sketBuffer[2]  = 0x45;
+  sketBuffer[3]  = 0x67;
+  sketBuffer[4]  = 0x89;
+  sketBuffer[5]  = 0xAB;
+  sketBuffer[6]  = 0xCD;
+  sketBuffer[7]  = 0xEF;
 
   //wait for frame boundary
   dispNextFrame();

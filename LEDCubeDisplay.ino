@@ -70,6 +70,8 @@ const int subframeIntervall  = 10; //delay between subframes [multiples of 64us]
 //==========
 //Display buffer
 byte      dispBuffer[8]      = {0, 0, 0, 0, 0, 0, 0, 0};
+//Skeich buffer
+extern byte sketBuffer[];
 
 //Display iterator            7   6   5   4   3   2   1   0
 // The display iterator keeps track of the column that is to be shown next
@@ -121,11 +123,6 @@ void dispSetup() {
   PORTD = DS|ST;                            //toggle storage clock, enable outputs, and assert shift input
   PORTD = SH;                               //toggle shift clock
   PORTD = 0;
-
-  // Variables
-  dispBuffer[]  = {0, 0, 0, 0, 0, 0, 0, 0}; //clear dispBuffer
-  dispIterator  = subframes * columnCount;  //wait for update of
-  dispHandshake = true;                     // sketBuffer
 
   //Timer 2
   TCCR2A = (1 << WGM21);                    //CTC mode, no pin toggling
@@ -182,7 +179,14 @@ ISR(IMER2_COMPA_vect){                      //timer2 output compare A interrupt
         (dispIterator > (subframes * columnCount ))) {                   //frame is complete
 
       //Copy buffer content
-      dispBuffer[] = sketBuffer[];
+      dispBuffer[0] = sketBuffer[0];
+      dispBuffer[1] = sketBuffer[1];
+      dispBuffer[2] = sketBuffer[2];
+      dispBuffer[3] = sketBuffer[3];
+      dispBuffer[4] = sketBuffer[4];
+      dispBuffer[5] = sketBuffer[5];
+      dispBuffer[6] = sketBuffer[6];
+      dispBuffer[7] = sketBuffer[7];
 
       //Signal frame completion
       dispHandshake  = true;                                             //mark frame complete

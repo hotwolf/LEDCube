@@ -41,37 +41,6 @@
 //#      - Initial release                                                      #
 //###############################################################################
 
-// Display text
-//=============
-void txtDisp (char *text) {
-  //Clear buffer if necessary
-  while (sketTstBuf()) {
-    sketShFront;                                 //shift buffer front
-    dispNextFrame();                             //wait for frame boundary
-  }
-
-  //Clear buffer if necessarySet through string
-  while (*text text != '\0') {
-    unsigned int bitmap = txtFontTable[*text];  //lookup char
-    sketLdCol(15, (bitmap >>  0));              //write bitmap to buffer
-    sketLdCol(11, (bitmap >>  4));
-    sketLdCol( 7, (bitmap >>  8));
-    sketLdCol( 0, (bitmap >> 12));
-    dispNextFrame();             //wait for frame boundary
-
-    sketShFront;                 //shift buffer front
-    dispNextFrame();             //wait for frame boundary
-
-    text++;                                     //increment pointer
-  }
-
-  //Clear buffer
-  while (sketTstBuf()) {
-    sketShFront;                                 //shift buffer front
-    dispNextFrame();                             //wait for frame boundary
-  }
-}
-
 // Font look-up table
 //===================
 const unsigned int txtFontTable[]PROGMEM = {0x0660, // 0x00 NUL  ....  ....  ....  ....
@@ -233,3 +202,35 @@ const unsigned int txtFontTable[]PROGMEM = {0x0660, // 0x00 NUL  ....  ....  ...
                                             0x0966, // 0x7D }    ..#.  ..##  .#.#  .##.
                                             0x4242, // 0x7E ~    ..#.  ..##  #.#.  .##.
                                             0x0660};// 0x7F DEL  ..#.  .#..  ....  ....
+
+// Display text
+//=============
+void txtDisp (char *text) {
+  //Clear buffer if necessary
+  while (sketTstBuf()) {
+    sketShFront;                                 //shift buffer front
+    dispNextFrame();                             //wait for frame boundary
+  }
+
+  //Clear buffer if necessarySet through string
+  while (*text != '\0') {
+    unsigned int bitmap = txtFontTable[*text];  //lookup char
+    sketLdCol(15, (bitmap >>  0));              //write bitmap to buffer
+    sketLdCol(11, (bitmap >>  4));
+    sketLdCol( 7, (bitmap >>  8));
+    sketLdCol( 0, (bitmap >> 12));
+    dispNextFrame();             //wait for frame boundary
+
+    sketShFront;                 //shift buffer front
+    dispNextFrame();             //wait for frame boundary
+
+    text++;                                     //increment pointer
+  }
+
+  //Clear buffer
+  while (sketTstBuf()) {
+    sketShFront;                                 //shift buffer front
+    dispNextFrame();                             //wait for frame boundary
+  }
+}
+
