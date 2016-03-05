@@ -1,5 +1,5 @@
 //###############################################################################
-//# LEDCube - Display Routines                                                  #
+//# LEDCube - Display Driver                                                    #
 //###############################################################################
 //#    Copyright 2015 - 2016 Dirk Heisswolf                                     #
 //#    This file is part of the LEDCube project.                                #
@@ -35,25 +35,28 @@
 //#  L3  C0---C4---C8---C12          L2: 6 (PD6)                                #
 //#                                  L3: 7 (PD7)                                #
 //#                                                                             #
-//# Buffer format (array of 8 bytes):                                           #
-//#              7  6  5  4    3  2  1  0                                       #
-//#  index:    +--+--+--+--+ +--+--+--+--+                                      #
-//#    0    C0 |L3|L2|L1|L0| |L3|L2|L1|L0| C1                                   #
-//#            +--+--+--+--+ +--+--+--+--+                                      #
-//#    1    C2 |L3|L2|L1|L0| |L3|L2|L1|L0| C3                                   #
-//#            +--+--+--+--+ +--+--+--+--+                                      #
-//#    2    C4 |L3|L2|L1|L0| |L3|L2|L1|L0| C5                                   #
-//#            +--+--+--+--+ +--+--+--+--+                                      #
-//#    3    C6 |L3|L2|L1|L0| |L3|L2|L1|L0| C7                                   #
-//#            +--+--+--+--+ +--+--+--+--+                                      #
-//#    4    C8 |L3|L2|L1|L0| |L3|L2|L1|L0| C9                                   #
-//#            +--+--+--+--+ +--+--+--+--+                                      #
-//#    5   C10 |L3|L2|L1|L0| |L3|L2|L1|L0| C11                                  #
-//#            +--+--+--+--+ +--+--+--+--+                                      #
-//#    6   C12 |L3|L2|L1|L0| |L3|L2|L1|L0| C13                                  #
-//#            +--+--+--+--+ +--+--+--+--+                                      #
-//#    7   C14 |L3|L2|L1|L0| |L3|L2|L1|L0| C15                                  #
-//#            +--+--+--+--+ +--+--+--+--+                                      #
+//# LED pattern format (unsigned 64-bit integer):                               #
+//#                                                                             #
+//#                  C15         C14         C13         C12                    #
+//#             +-----------+-----------+-----------+-----------+               #
+//#             |L3 L2 L1 L0|L3 L2 L1 L0|L3 L2 L1 L0|L3 L2 L1 L0|               #
+//#             +-----------+-----------+-----------+-----------+               #
+//#              63       60 59       56 55       52 51       48                #
+//#                  C11         C10         C9          C8                     #
+//#             +-----------+-----------+-----------+-----------+               #
+//#             |L3 L2 L1 L0|L3 L2 L1 L0|L3 L2 L1 L0|L3 L2 L1 L0|               #
+//#             +-----------+-----------+-----------+-----------+               #
+//#              47       44 43       40 39       36 35       32                #
+//#                  C7          C6          C5          C4                     #
+//#             +-----------+-----------+-----------+-----------+               #
+//#             |L3 L2 L1 L0|L3 L2 L1 L0|L3 L2 L1 L0|L3 L2 L1 L0|               #
+//#             +-----------+-----------+-----------+-----------+               #
+//#              31       28 27       24 23       20 19       16                #
+//#                  C3          C2          C1          C0                     #
+//#             +-----------+-----------+-----------+-----------+               #
+//#             |L3 L2 L1 L0|L3 L2 L1 L0|L3 L2 L1 L0|L3 L2 L1 L0|               #
+//#             +-----------+-----------+-----------+-----------+               #
+//#              15       12 11        8  7        4  3        0                #
 //#                                                                             #
 //###############################################################################
 //# Version History:                                                            #
@@ -61,58 +64,36 @@
 //#      - Initial release                                                      #
 //###############################################################################
 
+#include <avr/sleep.h>
+#include <avr/power.h>
+#include "LEDCube.h"
+
 // General definitions
 //====================
-const int subframes          =  4; //number of subframes per frame
-const int subframeIntervall  = 10; //delay between subframes [multiples of 64us]
+//Framerate
+#define FRAMERATE	15                  //frames per second 	
+#define SUBFRAMES	 4                  //subframes per frame
+			                    
+//FIFI depth		                    
+#define FIFIDEPTH	16                  //number of FIFO entries
+				            
+// Variables			            
+//==========			            
+//FIFO				            
+ledState	fifo[FIFODEPTH];            //FIFO buffer
+unsigned char	fifoIn   = 0;               //index of next free cell in FIFO buffer
+unsigned char   fifoOut  = 0;               //index of oldest entry in FIFO buffer
+                                            // FIFO is empty if (fifoIn == fifoOut)
+//Display state
+signed char	column   = -1;              //current column (display inactive if (column < 0)
+signed char	subframe = SUBFRAMES;       //current subframe
 
-// Variables
-//==========
-//Display buffer
-byte      dispBuffer[8]      = {0, 0, 0, 0, 0, 0, 0, 0};
-//Skeich buffer
-extern byte sketBuffer[];
-
-//Display iterator            7   6   5   4   3   2   1   0
-// The display iterator keeps track of the column that is to be shown next
-// in the current subframe, as well as the next subframe within the current
-// frame:
-//        +---+---+---+---+---+---+---+---+
-//        | subframe count| column index  |
-//        +---+---+---+---+---+---+---+---+
-byte       dispIterator      = subframes * columnCount;
-
-//Display handshake flag
-//Handshake mechanism:
-//    Display driver:                    Application code:
-//    ~~~~~~~~~~~~~~~                    ~~~~~~~~~~~~~~~~~
-// +-----------+                                  +-----------------+
-// |           |                                  |                 |
-// |           V                                  V                 |
-// |  The content of dispBuffer          New sketBuffer content     |
-// |  displayed for the length           is calculated              |
-// |  of one full frame                           |                 |
-// |           |                                  |                 |
-// |           V                                  V                 |
-// |  Further subframes of the<--.    .->The application code       |
-// |  dispBuffer content are      \  /   waits until distHandshake  |
-// |  displayed, until             \/    is TRUE  |                 |
-// |  dispHandshake is FALSE       /\             |                 |
-// |           |                  /  \            |                 |
-// |           V                 /    \           V                 |
-// |  The display driver copies_/      \_distHandshake is set to    |
-// |  the content of sketBuffer          FALSE    |                 |
-// |  into dispBuffer and                         |                 |
-// |  acknowledges the buffer                     +-----------------+
-// |  update by setting
-// |  distHandshake to TRUE
-// |           |
-// +-----------+
-boolean    dispHandshake     = true;
+//Column buffer
+unsigned char   colbuf   = 0;               //column buffer 
 
 // Setup routine
 //==============
-void dispSetup() {
+void displaySetup() {
   //Ports and shift registers
   PORTD =                OE;                //disable shift register outputs
   DDRD  = L3|L2|L1|L0|DS|OE|ST|SH;          //set entire port to output
@@ -127,30 +108,75 @@ void dispSetup() {
   //Timer 2
   TCCR2A = (1 << WGM21);                    //CTC mode, no pin toggling
   TCCR2B = (1 << CS22) |                    //set timer clock to 15.625kHz
-    (1 << CS21) |
-    (1 << CS20);
-  OCR2A  = subframeIntervall;               //set interrupt frequency to 1562.5Hz
+           (1 << CS21) |
+           (1 << CS20);
+  OCR2A  = 15625/(FRAMERATE*SUBFRAMES);     //set interrupt frequency
   TIMSK2 = (1 << OCIE2A);                   //enable output compare A interrupt
+
+  //Power modes
+  power_timer2_disable();                   //make sure timer2 is powered up
+  set_sleep_mode(SLEEP_MODE_IDLE);          //use idle mode
+  sleep_enable();                           //enable sleep instruction
 }
 
-// Synchronization Routines
-//=========================
-void dispNextFrame() {
+// Queue frame
+//============
+void queueFrame(ledState frame) {
+  //Copy new frame into FIFO buffer
+  fifo[fifoIn] = frame;
+
+  //Start of atomic sequence
   noInterrupts();                           //disable interrupts
-  while (dispHandshake) {                   //wait for next frame
-    interrupts();                           //enable interrupts
-    noInterrupts();                         //disable interrupts
+
+  //Wait until there is room in the queue
+  while(((fifoOut-fifoIn)%FIFIDEPTH) == 1) {//repeat as long as fifo is empty
+     wait_for_interrupts();                 //wait for anything to happen
+     noInterrrupts();                       //disable interrupts
   }
-  dispHandshake  = false;                   //clear frame complete indicator
+
+  //Advance in-index
+  fifoIn = (fifoIn+1)%FIFIDEPTH;            //increment and wrap index
+
+  //End of atomic sequence
   interrupts();                             //enable interrupts
 }
 
 // Interrupt Service Routine
 //==========================
-ISR(IMER2_COMPA_vect){                      //timer2 output compare A interrupt
+ISR(TIMER2_COMPA_vect){                     //timer2 output compare A interrupt
   //Local Variables
   byte    output;
 
+  if (column >= 0) {                        //check if display is active
+     //Display is active
+
+
+
+  } else {
+    //Display is inactive
+     if (fifoIn != fifoOut) {               //check if frame is queued 
+       //Activate display
+       subframe = SUBFRAMES;                //reset subframe count
+       column   = 0;                        //reset column counter                 
+       colbuf   = (fifo[fifoOut]&0x0F)<<4   //prepare columnbuffer
+
+
+
+
+
+
+
+
+
+
+  }
+
+
+
+
+
+
+  
   //Drive column pattern
   if (dispIterator & 1) {
     //Odd column
