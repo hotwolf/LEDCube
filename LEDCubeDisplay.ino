@@ -85,11 +85,12 @@ unsigned char	fifoIn   = 0;               //index of next free cell in FIFO buff
 unsigned char   fifoOut  = 0;               //index of oldest entry in FIFO buffer
                                             // FIFO is empty if (fifoIn == fifoOut)
 //Display state
-signed char	column   = -1;              //current column (display inactive if (column < 0)
-signed char	subframe = SUBFRAMES;       //current subframe
+unsigned char	column   = 0;               //current column (display inactive if (column < 0)
+unsigned char	subframe = SUBFRAMES;       //current subframe
 
-//Column buffer
-unsigned char   colbuf   = 0;               //column buffer 
+//Temporary buffers
+ledState        currentFrame = 0;           //current frame
+unsigned char   nextPortD    = 0;           //column buffer 
 
 // Setup routine
 //==============
@@ -145,17 +146,34 @@ void queueFrame(ledState frame) {
 //==========================
 ISR(TIMER2_COMPA_vect){                     //timer2 output compare A interrupt
   //Local Variables
-  byte    output;
+  byte    tmpOut;
 
-  if (column >= 0) {                        //check if display is active
-     //Display is active
+  //Drive precalculated column pattern
+  tmpOut = PORTD;                           //shift column
+  tmpOut = (tmpOut & 0xF8) | SH;
+  PORTD  = tmpOut;
+  PORTD  = nextPortD;                       //drive precalculated column pattern
 
+  //Switch to next column
+  column++;                                 //increment column index    
+
+  //Check if subframe is compete
+  if (column >= COLUMNS) {
+    //Start next sub-frame
+    column = 0;                             //reset column index
+    PORTD |= DS;                            //assert shift register input
+    subframe--;                             //decrement subframe count
+
+    //Fade frames on next to last subframe
+    if ((subframe == 1) &&                  //next to last subframe
+        (fifoIN   != fifoOut)) {            //FIFO is not empty
+      current..... <------hier weiter
 
 
   } else {
     //Display is inactive
      if (fifoIn != fifoOut) {               //check if frame is queued 
-       //Activate display
+       //Activate displa
        subframe = SUBFRAMES;                //reset subframe count
        column   = 0;                        //reset column counter                 
        colbuf   = (fifo[fifoOut]&0x0F)<<4   //prepare columnbuffer
