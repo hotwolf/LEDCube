@@ -35,7 +35,7 @@
 //#  L3  C0---C4---C8---C12          L2: 6 (PD6)                                #
 //#                                  L3: 7 (PD7)                                #
 //#                                                                             #
-//# LED pattern format (unsigned 64-bit integer):                               #
+//# LED state format (unsigned 64-bit integer):                                 #
 //#                                                                             #
 //#                  C15         C14         C13         C12                    #
 //#             +-----------+-----------+-----------+-----------+               #
@@ -71,17 +71,17 @@
 // General definitions
 //====================
 //Framerate
-#define FRAMERATE	15                  //frames per second 	
-#define SUBFRAMES	 4                  //subframes per frame
-			                    
-//FIFI depth		                    
-#define FIFIDEPTH	16                  //number of FIFO entries
-				            
-// Variables			            
-//==========			            
-//FIFO				            
-ledState	fifo[FIFODEPTH];            //FIFO buffer
-byte          	fifoIn   = 0;               //index of next free cell in FIFO buffer
+#define FRAMERATE       15                  //frames per second         
+#define SUBFRAMES        4                  //subframes per frame
+                                            
+//FIFI depth                                
+#define FIFODEPTH       16                  //number of FIFO entries
+                                            
+// Variables                                
+//==========                                
+//FIFO                                      
+ledState        fifo[FIFODEPTH];            //FIFO buffer
+byte            fifoIn   = 0;               //index of next free cell in FIFO buffer
 byte            fifoOut  = 0;               //index of oldest entry in FIFO buffer
                                             // FIFO is empty if (fifoIn == fifoOut)
 //Display state
@@ -90,7 +90,7 @@ byte            subframeCount = SUBFRAMES;  //current subframe
 
 //Temporary buffers
 ledState        currentFrame = 0;           //current frame
-byte             nextPortD    = 0;           //column buffer 
+byte            nextPortD    = 0;           //column buffer 
 
 // Setup routine
 //==============
@@ -130,13 +130,13 @@ void dispQueueFrame(ledState frame) {
   noInterrupts();                           //disable interrupts
 
   //Wait until there is room in the queue
-  while(((fifoOut-fifoIn)%FIFIDEPTH) == 1) {//repeat as long as fifo is empty
-     wait_for_interrupts();                 //wait for anything to happen
-     noInterrrupts();                       //disable interrupts
+  while(((fifoOut-fifoIn)%FIFODEPTH) == 1) {//repeat as long as fifo is empty
+     wait_for_interrupt();                 //wait for anything to happen
+     noInterrupts();                      //disable interrupts
   }
 
   //Advance in-index
-  fifoIn = (fifoIn+1)%FIFIDEPTH;            //increment and wrap index
+  fifoIn = (fifoIn+1)%FIFODEPTH;            //increment and wrap index
 
   //End of atomic sequence
   interrupts();                             //enable interrupts
@@ -159,19 +159,19 @@ ISR(TIMER2_COMPA_vect){                     //timer2 output compare A interrupt
   if (columnCount < COLUMNS) {              //check for end of subframe
     //Determine next column pattern in sub-frame
     nextPortD = (((currentFrame >> (4*(columnCount-1))) & 0xF0) | ST);//update column buffer
-  } else {	 
+  } else {       
     //Subframe is complete
     columnCount = 0;                        //reset column counter
     subframeCount--;                        //decrement subframe count
 
     //Update frame
-    if (fifoIN != fifoOut) {                //check if a new frame is in the queue
+    if (fifoIn != fifoOut) {                //check if a new frame is in the queue
       if (subframeCount == 1) {             //check for next to last subframe
-	//Fade frames on next to last subframe
+        //Fade frames on next to last subframe
         currentFrame |= fifo[fifoOut];      //merge current and next frame
-      } else if (subframe == 0) {           //check for last subframe
-	//Switch to next frame
-	subframeCount = SUBFRAMES;          //reset subframe counter
+      } else if (subframeCount == 0) {      //check for last subframe
+        //Switch to next frame
+        subframeCount = SUBFRAMES;          //reset subframe counter
         currentFrame = fifo[fifoOut];       //get next frame
         fifoOut = ((fifoOut+1)%FIFODEPTH);  //remove frame from FIFO
       }

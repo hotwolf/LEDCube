@@ -35,7 +35,7 @@
 //#  L3  C0---C4---C8---C12          L2: 6 (PD6)                                #
 //#                                  L3: 7 (PD7)                                #
 //#                                                                             #
-//# LED pattern format (unsigned 64-bit integer):                               #
+//# LED state format (unsigned 64-bit integer):                                 #
 //#                                                                             #
 //#                  C15         C14         C13         C12                    #
 //#             +-----------+-----------+-----------+-----------+               #
@@ -63,6 +63,11 @@
 //#    January 4, 2016                                                          #
 //#      - Initial release                                                      #
 //###############################################################################
+
+// General definitions
+//====================
+//Framerate
+#define FRAME_REPETITION        4                   //frames per second         
 
 // Font look-up table
 //===================
@@ -228,32 +233,63 @@ const unsigned int txtFontTable[]PROGMEM = {0x0660, // 0x00 NUL  ....  ....  ...
 
 // Display text
 //=============
-void txtDisp (char *text) {
-  //Clear buffer if necessary
-  while (sketTstBuf()) {
-    sketShFront;                                 //shift buffer front
-    dispNextFrame();                             //wait for frame boundary
-  }
+ledState txtDisplay (ledState frame, char *text) {
+  //Shift out previous content
+  frame = txtShiftOut (frame);
 
-  //Clear buffer if necessarySet through string
+  //Display string 
   while (*text != '\0') {
-    unsigned int bitmap = txtFontTable[*text];  //lookup char
-    sketLdCol(15, (bitmap >>  0));              //write bitmap to buffer
-    sketLdCol(11, (bitmap >>  4));
-    sketLdCol( 7, (bitmap >>  8));
-    sketLdCol( 0, (bitmap >> 12));
-    dispNextFrame();             //wait for frame boundary
-
-    sketShFront;                 //shift buffer front
-    dispNextFrame();             //wait for frame boundary
-
-    text++;                                     //increment pointer
+    frame =  txtDisplayChar (frame, *text);         //display character
+    text++;                                         //increment string pointer
   }
+  
+  //Shift out text
+  frame = txtShiftOut (frame);
 
-  //Clear buffer
-  while (sketTstBuf()) {
-    sketShFront;                                 //shift buffer front
-    dispNextFrame();                             //wait for frame boundary
+  //Return updated frame
+  return frame;
+}
+
+// Queue frame multiple times
+//===========================
+void txtQueueFrame (ledState frame) {
+  for (byte i = FRAME_REPETITION; i > 0; i--) {     //reprat FRAME_REPETITION times
+    dispQueueFrame(frame);                          //display frame
   }
+}
+
+// Shift out content
+//==================
+ledState txtShiftOut (ledState frame) {
+  while (frame) {                                   //check if any LEDs are lit
+    frame = sketUnshiftY(frame);                    //shift frame by one position
+    txtQueueFrame(frame);                           //display frame
+  }
+  return frame;                                     //return empty frame
+}
+
+// Display char
+//=============
+ledState txtDisplayChar (ledState frame, char character) {
+  //Local variables
+  unsigned int fontPattern;
+
+  //Display empty slice
+  frame = sketUnshiftY(frame);                      //shift frame by one position
+  txtQueueFrame(frame);                             //display frame
+  
+  //Lookup font pattern
+  fontPattern = txtFontTable[character & 0x7F];
+
+  //Display font pattern
+  frame = sketUnshiftY(frame);                      //shift frame by one position
+  frame |= (((0xF000 & fontPattern)            ) |  //C3
+            ((0x0F00 & fontPattern) << ( 5 * 4)) |  //C7
+            ((0x00F0 & fontPattern) << (10 * 4)) |  //C11
+            ((0x000F & fontPattern) << (15 * 4)));  //C11
+  txtQueueFrame(frame);                             //display frame
+
+  //Return updated frame
+  return frame;
 }
 

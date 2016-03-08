@@ -37,7 +37,7 @@
 //#  L3  C0---C4---C8---C12          L2: 6 (PD6)                                #
 //#                                  L3: 7 (PD7)                                #
 //#                                                                             #
-//# LED pattern format (unsigned 64-bit integer):                               #
+//# LED state format (unsigned 64-bit integer):                                 #
 //#                                                                             #
 //#                  C15         C14         C13         C12                    #
 //#             +-----------+-----------+-----------+-----------+               #
@@ -72,20 +72,20 @@ typedef unsigned long long ledState;
 
 // General definitions
 //====================
-#define COLUMNS            16
-#define LEVELS              4
+#define LEVELS             4
+#define COLUMNS            (LEVELS * LEVELS)
 
 // Pin definitions
 //================
-#define PL3                 7    //level 3                   7 (PD7)
-#define PL2                 6    //level 2                   6 (PD6)
-#define PL1                 5    //level 1                   5 (PD5)
-#define PL0                 4    //level 0                   4 (PD4)
-			         
-#define PDS                 3    //serial data input         3 (PD3)
-#define POE                 2    //output enable, active low 2 (PD2)
-#define PST                 1    //storage clock             1 (PD1)
-#define PSH                 0    //shift clock               0 (PD0)
+#define PL3                7    //level 3                   7 (PD7)
+#define PL2                6    //level 2                   6 (PD6)
+#define PL1                5    //level 1                   5 (PD5)
+#define PL0                4    //level 0                   4 (PD4)
+                                
+#define PDS                3    //serial data input         3 (PD3)
+#define POE                2    //output enable, active low 2 (PD2)
+#define PST                1    //storage clock             1 (PD1)
+#define PSH                0    //shift clock               0 (PD0)
 
 // Bit definitions
 //================
@@ -93,11 +93,41 @@ typedef unsigned long long ledState;
 #define L2                  (1 << PL2)
 #define L1                  (1 << PL1)
 #define L0                  (1 << PL0)
-			   
+                           
 #define DS                  (1 << PDS)
 #define OE                  (1 << POE)
 #define ST                  (1 << PST)
 #define SH                  (1 << PSH)
+
+// LED patterns
+//=============
+#define LED_STATE_MASK      ((1 << (LEVELS * COLUMNS)) - 1)
+#define LED_STATE_ALL_ON    LED_STATE_MASK 
+#define LED_STATE_ALL_OFF   0
+#define LED_STATE_LEVEL_0   (LED_STATE_MASK & (((((((((((((((((((((((((((((((1  << LEVELS) |\
+                                                                             1) << LEVELS) |\
+                                                                             1) << LEVELS) |\
+                                                                             1) << LEVELS) |\
+                                                                             1) << LEVELS) |\
+                                                                             1) << LEVELS) |\
+                                                                             1) << LEVELS) |\
+                                                                             1) << LEVELS) |\
+                                                                             1) << LEVELS) |\
+                                                                             1) << LEVELS) |\
+                                                                             1) << LEVELS) |\
+                                                                             1) << LEVELS) |\
+                                                                             1) << LEVELS) |\
+                                                                             1) << LEVELS) |\
+                                                                             1) << LEVELS) |\
+                                                                             1) << LEVELS))
+#define LED_STATE_LEVEL_1   (LED_STATE_LEVEL_0 << 1)
+#define LED_STATE_LEVEL_2   (LED_STATE_LEVEL_0 << 2)
+#define LED_STATE_LEVEL_3   (LED_STATE_LEVEL_0 << 3)
+#define LED_STATE_SLICE_Y0  (LED_STATE_MASK & ((((((((((((1 << LEVELS) - 1)  << (LEVELS * LEVELS)) | \
+                                                         (1 << LEVELS) - 1)) << (LEVELS * LEVELS)) | \
+                                                         (1 << LEVELS) - 1)) << (LEVELS * LEVELS)) | \
+                                                         (1 << LEVELS) - 1)) << (LEVELS * LEVELS)))
+
 
 // Macro definitions
 //==================

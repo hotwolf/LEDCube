@@ -35,45 +35,41 @@
 //#  L3  C0---C4---C8---C12          L2: 6 (PD6)                                #
 //#                                  L3: 7 (PD7)                                #
 //#                                                                             #
+//# LED state format (unsigned 64-bit integer):                                 #
+//#                                                                             #
+//#                  C15         C14         C13         C12                    #
+//#             +-----------+-----------+-----------+-----------+               #
+//#             |L3 L2 L1 L0|L3 L2 L1 L0|L3 L2 L1 L0|L3 L2 L1 L0|               #
+//#             +-----------+-----------+-----------+-----------+               #
+//#              63       60 59       56 55       52 51       48                #
+//#                  C11         C10         C9          C8                     #
+//#             +-----------+-----------+-----------+-----------+               #
+//#             |L3 L2 L1 L0|L3 L2 L1 L0|L3 L2 L1 L0|L3 L2 L1 L0|               #
+//#             +-----------+-----------+-----------+-----------+               #
+//#              47       44 43       40 39       36 35       32                #
+//#                  C7          C6          C5          C4                     #
+//#             +-----------+-----------+-----------+-----------+               #
+//#             |L3 L2 L1 L0|L3 L2 L1 L0|L3 L2 L1 L0|L3 L2 L1 L0|               #
+//#             +-----------+-----------+-----------+-----------+               #
+//#              31       28 27       24 23       20 19       16                #
+//#                  C3          C2          C1          C0                     #
+//#             +-----------+-----------+-----------+-----------+               #
+//#             |L3 L2 L1 L0|L3 L2 L1 L0|L3 L2 L1 L0|L3 L2 L1 L0|               #
+//#             +-----------+-----------+-----------+-----------+               #
+//#              15       12 11        8  7        4  3        0                #
+//#                                                                             #
 //###############################################################################
 //# Version History:                                                            #
 //#    November 30, 2015                                                        #
 //#      - Initial release                                                      #
 //###############################################################################
 
-// General definitions
-//====================
-const int columnCount       = 16;
-const int levelCount        =  4;
-
-// Pin definitions
-//================
-const byte PL3               = 7;        //level 3                   7 (PD7)
-const byte PL2               = 6;        //level 2                   6 (PD6)
-const byte PL1               = 5;        //level 1                   5 (PD5)
-const byte PL0               = 4;        //level 0                   4 (PD4)
-
-const byte PDS               = 3;        //serial data input         3 (PD3)
-const byte POE               = 2;        //output enable, active low 2 (PD2)
-const byte PST               = 1;        //storage clock             1 (PD1)
-const byte PSH               = 0;        //shift clock               0 (PD0)
-
-// Bit definitions
-//================
-const byte L3                = (1 << PL3);
-const byte L2                = (1 << PL2);
-const byte L1                = (1 << PL1);
-const byte L0                = (1 << PL0);
-
-const byte DS                = (1 << PDS);
-const byte OE                = (1 << POE);
-const byte ST                = (1 << PST);
-const byte SH                = (1 << PSH);
+#include "LEDCube.h"
 
 // Variables
 //==========
-//Skeich buffer
-extern byte sketBuffer[];
+ledState        frame = 0;           //current frame
+
 
 // Setup routine
 //==============
@@ -81,7 +77,7 @@ void setup() {
      //Disable interrupts until setup is complete
      noInterrupts();
 
-     //Display routines
+     //Setup display driver
      dispSetup();
 
      //Sketch routines
@@ -95,16 +91,6 @@ void setup() {
 //=================
 void loop() {
 
-  //Set sketch buffer
-  sketBuffer[0]  = 0x01;
-  sketBuffer[1]  = 0x23;
-  sketBuffer[2]  = 0x45;
-  sketBuffer[3]  = 0x67;
-  sketBuffer[4]  = 0x89;
-  sketBuffer[5]  = 0xAB;
-  sketBuffer[6]  = 0xCD;
-  sketBuffer[7]  = 0xEF;
+  frame = txtDisplay (frame, "Hello World!");
 
-  //wait for frame boundary
-  dispNextFrame();
 }

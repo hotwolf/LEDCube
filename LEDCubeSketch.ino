@@ -35,7 +35,7 @@
 //#  L3  C0---C4---C8---C12          L2: 6 (PD6)                                #
 //#                                  L3: 7 (PD7)                                #
 //#                                                                             #
-//# LED pattern format (unsigned 64-bit integer):                               #
+//# LED state format (unsigned 64-bit integer):                                 #
 //#                                                                             #
 //#                  C15         C14         C13         C12                    #
 //#             +-----------+-----------+-----------+-----------+               #
@@ -92,74 +92,63 @@ boolean sketTstPx(ledState frame, byte column, byte level) {
 //==================
 //Set all pixels in a column
 ledState sketSetCol(ledState frame, byte column) {
-  return (frame | (0xF << (LEVELS * column)));
+  return (frame | (((1 << LEVELS) - 1) << (LEVELS * column))); // ((1 << LEVELS) - 1) = 0xF
 }
 
 //Clear all pixels in a column
 ledState sketClrCol(ledState frame, byte column) {
-  return (frame & ~(0xF << (LEVELS * column)));
+  return (frame & ~(((1 << LEVELS) - 1) << (LEVELS * column)));
 }
 
 //Invert all pixels in a column
 ledState sketInvCol(ledState frame, byte column) {
-  return (frame ^ (0xF << (LEVELS * column)));
+  return (frame ^ (((1 << LEVELS) << (LEVELS * column))));
 }
 
 //Insert a column
 ledState sketInsCol(ledState frame, byte column, byte pattern) {
-  return ((frame & ~(0xF << (LEVELS * column))) |
-	  (0xF & pattern) << (LEVELS * column));
+  return (frame &
+          (~(((1 << LEVELS)            << (LEVELS * column))) |
+            (((1 << LEVELS) & pattern) << (LEVELS * column))));
 }
 
 //Test if any pixel in a column is set
 boolean sketTstCol(byte column) {
-  return (frame & (0xF << (LEVELS * column)));
+  return (frame & (((1 << LEVELS) << (LEVELS * column))));
 }
+
 // Level operations
 //=================
 //Set all pixels in a level
 ledState sketSetLev(ledState frame, byte level) {
-  for (byte column = 0; column < COLUMNS; column++) {
-    frame |= (1 << ((LEVELS * column) + level));
-  }
-  return frame;
+  return (frame | (LED_STATE_LEVEL_0 << level));
 }
 
 //Clear all pixels in a level
 ledState sketClrLev(ledState frame, byte level) {
-  for (byte column = 0; column < COLUMNS; column++) {
-    frame &= (~1 << ((LEVELS * column) + level));
-  }
-  return frame;
+  return (frame & ~(LED_STATE_LEVEL_0 << level));
 }
   
 //Invert all pixels in a level
 ledState sketInvLev(ledState frame, byte level) {
-  for (byte column = 0; column < COLUMNS; column++) {
-    frame &= (~1 << ((LEVELS * column) + level));
-  }
-  return frame;
+  return (frame ^ (LED_STATE_LEVEL_0 << level));
 }
 
 //Test if any pixel in a level is set
 boolean sketTstLev(ledState frame, byte level) {
-  boolean result = false; 
-  for (byte column = 0; column < COLUMNS; column++) {
-    result |= (~1 << ((LEVELS * column) + level));
-  }
-  return result;
+  return (frame & (LED_STATE_LEVEL_0 << level));
 }
 
 // Buffer operations
 //==================
 //Set all pixels
 ledState sketSetBuf() {
-  return -1;
+  return LED_STATE_ALL_ON;
 }
 
 //Clear all pixels
 ledState sketClrBuf() {
-  return 0;
+  return LED_STATE_ALL_OFF;
 }
 
 //Invert all pixels
@@ -186,27 +175,21 @@ ledState  sketUnshiftX(ledState frame) {
 
 //Shift all pixels one position in Y direction
 ledState  sketShiftY(ledState frame) {
-  frame = (frame << (LEVELS));
-
-    for (byte column = 0; column < COLUMNS; column = column + LEVELS) {
-    frame &= (~1 << ((LEVELS * column) + level));
-  }
-  return frame;
-
-
-
-  
-
-  return frame;
+  return ((frame << LEVELS) & ~LED_STATE_SLICE_Y0);
 }
 
 //Shift all pixels one position in opposite Y direction
 ledState  sketUnshiftY(ledState frame) {
+  return ((frame & ~LED_STATE_SLICE_Y0) >> LEVELS);
+ }
 
+//Shift all pixels one position in Z direction
+ledState  sketShiftZ(ledState frame) {
+  return ((frame << 1) & ~LED_STATE_LEVEL_0);
+}
 
-
-
-
-  return (frame >> (LEVELS*LEVELS));
+//Shift all pixels one position in opposite Z direction
+ledState  sketUnshiftZ(ledState frame) {
+  return ((frame & ~LED_STATE_LEVEL_0) >> 1);
 }
 
