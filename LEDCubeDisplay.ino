@@ -81,20 +81,20 @@
 //==========			            
 //FIFO				            
 ledState	fifo[FIFODEPTH];            //FIFO buffer
-unsigned char	fifoIn   = 0;               //index of next free cell in FIFO buffer
-unsigned char   fifoOut  = 0;               //index of oldest entry in FIFO buffer
+byte          	fifoIn   = 0;               //index of next free cell in FIFO buffer
+byte            fifoOut  = 0;               //index of oldest entry in FIFO buffer
                                             // FIFO is empty if (fifoIn == fifoOut)
 //Display state
-unsigned char	column   = 0;               //current column (display inactive if (column < 0)
-unsigned char	subframe = SUBFRAMES;       //current subframe
+byte            columnCount   = 0;          //current column (display inactive if (column < 0)
+byte            subframeCount = SUBFRAMES;  //current subframe
 
 //Temporary buffers
 ledState        currentFrame = 0;           //current frame
-unsigned char   nextPortD    = 0;           //column buffer 
+byte             nextPortD    = 0;           //column buffer 
 
 // Setup routine
 //==============
-void displaySetup() {
+void dispSetup() {
   //Ports and shift registers
   PORTD =                OE;                //disable shift register outputs
   DDRD  = L3|L2|L1|L0|DS|OE|ST|SH;          //set entire port to output
@@ -122,7 +122,7 @@ void displaySetup() {
 
 // Queue frame
 //============
-void queueFrame(ledState frame) {
+void dispQueueFrame(ledState frame) {
   //Copy new frame into FIFO buffer
   fifo[fifoIn] = frame;
 
@@ -150,94 +150,37 @@ ISR(TIMER2_COMPA_vect){                     //timer2 output compare A interrupt
 
   //Drive precalculated column pattern
   tmpOut = PORTD;                           //shift column
-  tmpOut = (tmpOut & 0xF8) | SH;
-  PORTD  = tmpOut;
+  tmpOut = (tmpOut & 0xF8) | SH;            // determine shift register inputs first
+  PORTD  = tmpOut;                          // then dreive all outputs at once
   PORTD  = nextPortD;                       //drive precalculated column pattern
 
   //Switch to next column
-  column++;                                 //increment column index    
+  columnCount++;                            //increment column counter  
+  if (columnCount < COLUMNS) {              //check for end of subframe
+    //Determine next column pattern in sub-frame
+    nextPortD = (((currentFrame >> (4*(columnCount-1))) & 0xF0) | ST);//update column buffer
+  } else {	 
+    //Subframe is complete
+    columnCount = 0;                        //reset column counter
+    subframeCount--;                        //decrement subframe count
 
-  //Check if subframe is compete
-  if (column >= COLUMNS) {
-    //Start next sub-frame
-    column = 0;                             //reset column index
-    PORTD |= DS;                            //assert shift register input
-    subframe--;                             //decrement subframe count
-
-    //Fade frames on next to last subframe
-    if ((subframe == 1) &&                  //next to last subframe
-        (fifoIN   != fifoOut)) {            //FIFO is not empty
-      current..... <------hier weiter
-
-
-  } else {
-    //Display is inactive
-     if (fifoIn != fifoOut) {               //check if frame is queued 
-       //Activate displa
-       subframe = SUBFRAMES;                //reset subframe count
-       column   = 0;                        //reset column counter                 
-       colbuf   = (fifo[fifoOut]&0x0F)<<4   //prepare columnbuffer
-
-
-
-
-
-
-
-
-
-
-  }
-
-
-
-
-
-
-  
-  //Drive column pattern
-  if (dispIterator & 1) {
-    //Odd column
-    output = dispBuffer[(dispIterator & (columnCount - 1)) >> 1] << 6;   //set column pattrern
-  } else {
-    //Even column
-    output = dispBuffer[(dispIterator & (columnCount - 1)) >> 1] & 0xF0; //set column pattrern
-  }
-  output |= ST;                                                          //toggle storage clock
-  PORTD   = output;                                                      //drive output
-  output &= L3|L2|L1|L0;                                                 //clear storage clock
-
-  //Advance iterator
-  dispIterator++;
-  if (dispIterator == 0) {
-    dispIterator = -columnCount;                                         //saturate subframe count
-  }
-
-  //Restart shift sequence after subframe
-  if (!(dispIterator & (columnCount - 1))) {
-    //Restart shift sequence
-    output |= DS;                                                        //assert shift input
-    PORTD   = output;                                                    //drive output
-
-    if ((!dispHandshake) &&                                              //sketBuffer is ready
-        (dispIterator > (subframes * columnCount ))) {                   //frame is complete
-
-      //Copy buffer content
-      dispBuffer[0] = sketBuffer[0];
-      dispBuffer[1] = sketBuffer[1];
-      dispBuffer[2] = sketBuffer[2];
-      dispBuffer[3] = sketBuffer[3];
-      dispBuffer[4] = sketBuffer[4];
-      dispBuffer[5] = sketBuffer[5];
-      dispBuffer[6] = sketBuffer[6];
-      dispBuffer[7] = sketBuffer[7];
-
-      //Signal frame completion
-      dispHandshake  = true;                                             //mark frame complete
+    //Update frame
+    if (fifoIN != fifoOut) {                //check if a new frame is in the queue
+      if (subframeCount == 1) {             //check for next to last subframe
+	//Fade frames on next to last subframe
+        currentFrame |= fifo[fifoOut];      //merge current and next frame
+      } else if (subframe == 0) {           //check for last subframe
+	//Switch to next frame
+	subframeCount = SUBFRAMES;          //reset subframe counter
+        currentFrame = fifo[fifoOut];       //get next frame
+        fifoOut = ((fifoOut+1)%FIFODEPTH);  //remove frame from FIFO
+      }
     }
-  }
 
-  //Advance shift registers
-  output |= SH;                                                          //toggle shift clock clock
-  PORTD   = output;                                                      //drive output
+    //Determine next column pattern in sub-frame
+    nextPortD = (((currentFrame << 4) & 0xF0) | ST);//update column buffer
+
+    //assert shift register input
+    PORTD |= DS;                              //assert DS
+  }
 }

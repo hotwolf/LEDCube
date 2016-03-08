@@ -35,25 +35,28 @@
 //#  L3  C0---C4---C8---C12          L2: 6 (PD6)                                #
 //#                                  L3: 7 (PD7)                                #
 //#                                                                             #
-//# Buffer format (array of 8 bytes):                                           #
-//#              7  6  5  4    3  2  1  0                                       #
-//#  index:    +--+--+--+--+ +--+--+--+--+                                      #
-//#    0    C0 |L3|L2|L1|L0| |L3|L2|L1|L0| C1                                   #
-//#            +--+--+--+--+ +--+--+--+--+                                      #
-//#    1    C2 |L3|L2|L1|L0| |L3|L2|L1|L0| C3                                   #
-//#            +--+--+--+--+ +--+--+--+--+                                      #
-//#    2    C4 |L3|L2|L1|L0| |L3|L2|L1|L0| C5                                   #
-//#            +--+--+--+--+ +--+--+--+--+                                      #
-//#    3    C6 |L3|L2|L1|L0| |L3|L2|L1|L0| C7                                   #
-//#            +--+--+--+--+ +--+--+--+--+                                      #
-//#    4    C8 |L3|L2|L1|L0| |L3|L2|L1|L0| C9                                   #
-//#            +--+--+--+--+ +--+--+--+--+                                      #
-//#    5   C10 |L3|L2|L1|L0| |L3|L2|L1|L0| C11                                  #
-//#            +--+--+--+--+ +--+--+--+--+                                      #
-//#    6   C12 |L3|L2|L1|L0| |L3|L2|L1|L0| C13                                  #
-//#            +--+--+--+--+ +--+--+--+--+                                      #
-//#    7   C14 |L3|L2|L1|L0| |L3|L2|L1|L0| C15                                  #
-//#            +--+--+--+--+ +--+--+--+--+                                      #
+//# LED pattern format (unsigned 64-bit integer):                               #
+//#                                                                             #
+//#                  C15         C14         C13         C12                    #
+//#             +-----------+-----------+-----------+-----------+               #
+//#             |L3 L2 L1 L0|L3 L2 L1 L0|L3 L2 L1 L0|L3 L2 L1 L0|               #
+//#             +-----------+-----------+-----------+-----------+               #
+//#              63       60 59       56 55       52 51       48                #
+//#                  C11         C10         C9          C8                     #
+//#             +-----------+-----------+-----------+-----------+               #
+//#             |L3 L2 L1 L0|L3 L2 L1 L0|L3 L2 L1 L0|L3 L2 L1 L0|               #
+//#             +-----------+-----------+-----------+-----------+               #
+//#              47       44 43       40 39       36 35       32                #
+//#                  C7          C6          C5          C4                     #
+//#             +-----------+-----------+-----------+-----------+               #
+//#             |L3 L2 L1 L0|L3 L2 L1 L0|L3 L2 L1 L0|L3 L2 L1 L0|               #
+//#             +-----------+-----------+-----------+-----------+               #
+//#              31       28 27       24 23       20 19       16                #
+//#                  C3          C2          C1          C0                     #
+//#             +-----------+-----------+-----------+-----------+               #
+//#             |L3 L2 L1 L0|L3 L2 L1 L0|L3 L2 L1 L0|L3 L2 L1 L0|               #
+//#             +-----------+-----------+-----------+-----------+               #
+//#              15       12 11        8  7        4  3        0                #
 //#                                                                             #
 //###############################################################################
 //# Version History:                                                            #
@@ -61,94 +64,88 @@
 //#      - Initial release                                                      #
 //###############################################################################
 
-// Variables
-//==========
-//Skeich buffer
-byte      sketBuffer[8]      = {0, 0, 0, 0, 0, 0, 0, 0};
-
-// Setup routine
-//==============
-void sketSetup() {
-}
+#include "LEDCube.h"
 
 // Pixel operations
 //=================
 //Set a single pixel
-void sketSetPx(byte column, byte level) {
-  sketBuffer[column >> 1] |= (1 << (level + 4 - (4 * (column & 1))));
+ledState sketSetPx(ledState frame, byte column, byte level) {
+  return (frame | (1 << ((LEVELS * column) + level)));
 }
 
 //Clear a single pixel
-void sketClrPx(byte column, byte level) {
-  sketBuffer[column >> 1] &= ~(1 << (level + 4 - (4 * (column & 1))));
+ledState sketClrPx(ledState frame, byte column, byte level) {
+  return (frame & ~(1 << ((LEVELS * column) + level)));
 }
 
 //Invert a single pixel
-void sketInvPx(byte column, byte level) {
-  sketBuffer[column >> 1] = sketBuffer[column >> 1] ^ (1 << (level + 4 - (4 * (column & 1))));
+ledState sketInvPx(ledState frame, byte column, byte level) {
+  return (frame ^ (1 << ((LEVELS * column) + level)));
 }
 
 //Test if a single pixel is set
-boolean sketTstPx(byte column, byte level) {
-  return ((sketBuffer[column >> 1] & (1 << (level + 4 - (4 * (column & 1))))) != 0);
+boolean sketTstPx(ledState frame, byte column, byte level) {
+  return (frame & (1 << ((LEVELS * column) + level)));
 }
 
 // Column operations
 //==================
 //Set all pixels in a column
-void sketSetCol(byte column) {
-    sketBuffer[column >> 1] |= ((columnCount - 1) << (4 - (4 * (column & 1))));
+ledState sketSetCol(ledState frame, byte column) {
+  return (frame | (0xF << (LEVELS * column)));
 }
 
 //Clear all pixels in a column
-void sketClrCol(byte column) {
-  sketBuffer[column >> 1] &= ~((columnCount - 1) << (4 - (4 * (column & 1))));
+ledState sketClrCol(ledState frame, byte column) {
+  return (frame & ~(0xF << (LEVELS * column)));
 }
 
 //Invert all pixels in a column
-void sketInvCol(byte column) {
-  sketBuffer[column >> 1] = sketBuffer[column >> 1] ^ ((columnCount - 1) << (4 - (4 * (column & 1))));
+ledState sketInvCol(ledState frame, byte column) {
+  return (frame ^ (0xF << (LEVELS * column)));
+}
+
+//Insert a column
+ledState sketInsCol(ledState frame, byte column, byte pattern) {
+  return ((frame & ~(0xF << (LEVELS * column))) |
+	  (0xF & pattern) << (LEVELS * column));
 }
 
 //Test if any pixel in a column is set
 boolean sketTstCol(byte column) {
-  return ((sketBuffer[column >> 1] & ((columnCount - 1) << (4 - (4 * (column & 1))))) != 0);
+  return (frame & (0xF << (LEVELS * column)));
 }
-
-//load a pattern into a column
-void sketLdCol(byte column, byte pattern) {
-  sketBuffer[column >> 1] = ((sketBuffer[column >> 1] & ((columnCount - 1) << (4 * (column & 1)))) |
-                             (pattern & (columnCount - 1)) << (4 - (4 * (column & 1))));
-}
-
 // Level operations
 //=================
 //Set all pixels in a level
-void sketSetLev(byte level) {
-  for (byte dcolumn = 0; dcolumn < (columnCount/2); dcolumn++) {
-    sketBuffer[dcolumn] |= ((1 << level) | (1 << (level + 4)));
+ledState sketSetLev(ledState frame, byte level) {
+  for (byte column = 0; column < COLUMNS; column++) {
+    frame |= (1 << ((LEVELS * column) + level));
   }
+  return frame;
 }
 
 //Clear all pixels in a level
-void sketClrLev(byte level) {
-  for (byte dcolumn = 0; dcolumn < (columnCount/2); dcolumn++) {
-    sketBuffer[dcolumn] &= ~((1 << level) | (1 << (level + 4)));
+ledState sketClrLev(ledState frame, byte level) {
+  for (byte column = 0; column < COLUMNS; column++) {
+    frame &= (~1 << ((LEVELS * column) + level));
   }
+  return frame;
 }
-
+  
 //Invert all pixels in a level
-void sketInvLev(byte level) {
-  for (byte dcolumn = 0; dcolumn < (columnCount/2); dcolumn++) {
-    sketBuffer[dcolumn] = sketBuffer[dcolumn] ^ ((1 << level) | (1 << (level + 4)));
+ledState sketInvLev(ledState frame, byte level) {
+  for (byte column = 0; column < COLUMNS; column++) {
+    frame &= (~1 << ((LEVELS * column) + level));
   }
+  return frame;
 }
 
 //Test if any pixel in a level is set
-boolean sketTstLev(byte level) {
-  boolean result = false;
-  for (byte dcolumn = 0; dcolumn < (columnCount/2); dcolumn++) {
-    result |= ((sketBuffer[dcolumn] & ((1 << level) | (1 << (level + 4)))) != 0);
+boolean sketTstLev(ledState frame, byte level) {
+  boolean result = false; 
+  for (byte column = 0; column < COLUMNS; column++) {
+    result |= (~1 << ((LEVELS * column) + level));
   }
   return result;
 }
@@ -156,103 +153,60 @@ boolean sketTstLev(byte level) {
 // Buffer operations
 //==================
 //Set all pixels
-void sketSetBuf() {
-  sketBuffer[0] = 0xFF;
-  sketBuffer[1] = 0xFF;
-  sketBuffer[2] = 0xFF;
-  sketBuffer[3] = 0xFF;
-  sketBuffer[4] = 0xFF;
-  sketBuffer[5] = 0xFF;
-  sketBuffer[6] = 0xFF;
-  sketBuffer[7] = 0xFF;
+ledState sketSetBuf() {
+  return -1;
 }
 
 //Clear all pixels
-void sketClrBuf() {
-  sketBuffer[0] = 0;
-  sketBuffer[1] = 0;
-  sketBuffer[2] = 0;
-  sketBuffer[3] = 0;
-  sketBuffer[4] = 0;
-  sketBuffer[5] = 0;
-  sketBuffer[6] = 0;
-  sketBuffer[7] = 0;
+ledState sketClrBuf() {
+  return 0;
 }
 
 //Invert all pixels
-void sketInvBuf() {
-  for (byte dcolumn = 0; dcolumn < (columnCount/2); dcolumn++) {
-    sketBuffer[dcolumn] = ~sketBuffer[dcolumn];
-  }
+ledState sketInvBuf(ledState frame) {
+  return ~frame;
 }
 
 //Test if any pixel in the buffer is set
-boolean sketTstBuf() {
-  boolean result = false;
-  for (byte dcolumn = 0; dcolumn < (columnCount/2); dcolumn++) {
-    result |= (sketBuffer[dcolumn] != 0);
-  }
-  return result;
+boolean sketTstBuf(ledState frame) {
+  return frame;
 }
 
 // Shift operations
 //=================
-//Shift all pixels one position down
-void sketShDown() {
-  for (byte dcolumn = 0; dcolumn < (columnCount/2); dcolumn++) {
-    sketBuffer[dcolumn] = (sketBuffer[dcolumn] & 0x77) << 1;
-  }
+//Shift all pixels one position in X direction
+ledState  sketShiftX(ledState frame) {
+  return (frame << (LEVELS*LEVELS));
 }
 
-//Shift all pixels one position up
-void sketShUp() {
-  for (byte dcolumn = 0; dcolumn < (columnCount/2); dcolumn++) {
-    sketBuffer[dcolumn] = (sketBuffer[dcolumn] & 0xEE) >> 1;
-  }
+//Shift all pixels one position in opposite X direction
+ledState  sketUnshiftX(ledState frame) {
+  return (frame >> (LEVELS*LEVELS));
 }
 
-//Shift all pixels one position front
-void sketShFront() {
-  //C0, C4, C8, and C12
-  for (byte dcolumn = 0; dcolumn < (12/2); dcolumn += 2) {
-    sketBuffer[dcolumn] = (sketBuffer[dcolumn] << 8) & (sketBuffer[dcolumn+ 1] >> 8);
+//Shift all pixels one position in Y direction
+ledState  sketShiftY(ledState frame) {
+  frame = (frame << (LEVELS));
+
+    for (byte column = 0; column < COLUMNS; column = column + LEVELS) {
+    frame &= (~1 << ((LEVELS * column) + level));
   }
-  //C2, C6, C10, and C14
-  for (byte dcolumn = (2/2); dcolumn < (14/2); dcolumn += 2) {
-    sketBuffer[dcolumn] = (sketBuffer[dcolumn] << 8);
-  }
+  return frame;
+
+
+
+  
+
+  return frame;
 }
 
-//Shift all pixels one position back
-void sketShBack() {
-  //C2, C6, C10, and C14
-  for (byte dcolumn = (2/2); dcolumn < (14/2); dcolumn += 2) {
-    sketBuffer[dcolumn] = (sketBuffer[dcolumn] >> 8) & (sketBuffer[dcolumn - 1] << 8);
-  }
-  //C0, C4, C8, and C12
-  for (byte dcolumn = 0; dcolumn < (12/2); dcolumn += 2) {
-    sketBuffer[dcolumn] = (sketBuffer[dcolumn] >> 8);
-  }
+//Shift all pixels one position in opposite Y direction
+ledState  sketUnshiftY(ledState frame) {
+
+
+
+
+
+  return (frame >> (LEVELS*LEVELS));
 }
 
-//Shift all pixels one position left
-void sketShLeft() {
-  //C0..C10
-  for (byte dcolumn = 0; dcolumn < (10/2); dcolumn += 2) {
-    sketBuffer[dcolumn] = sketBuffer[dcolumn + 2];
-  }
-  //C12 and C14
-  sketBuffer[12/2] = 0;
-  sketBuffer[14/2] = 0;
-}
-
-//Shift all pixels one position right
-void sketShRight() {
-  //C4..C14
-  for (byte dcolumn = (4/2); dcolumn < (14/2); dcolumn += 2) {
-    sketBuffer[dcolumn] = sketBuffer[dcolumn - 2];
-  }
-  //C0 and C2
-  sketBuffer[0]   = 0;
-  sketBuffer[2/2] = 0;
-}
