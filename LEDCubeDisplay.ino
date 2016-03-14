@@ -71,7 +71,6 @@
 // General definitions
 //====================
 //Framerate
-#define FRAMERATE       15                  //frames per second         
 #define SUBFRAMES        4                  //subframes per frame
                                             
 //FIFI depth                                

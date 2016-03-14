@@ -1,5 +1,5 @@
 //###############################################################################
-//# LEDCube - Sketching Routines                                                #
+//# LEDCube - "Bounce" Animation                                                #
 //###############################################################################
 //#    Copyright 2015 - 2016 Dirk Heisswolf                                     #
 //#    This file is part of the LEDCube project.                                #
@@ -66,129 +66,52 @@
 
 #include "LEDCube.h"
 
-// Pixel operations
-//=================
-//Set a single pixel
-ledState sketSetPx(ledState frame, byte column, byte level) {
-  return (frame | (1 << ((LEVELS * column) + level)));
-}
-
-//Clear a single pixel
-ledState sketClrPx(ledState frame, byte column, byte level) {
-  return (frame & ~(1 << ((LEVELS * column) + level)));
-}
-
-//Invert a single pixel
-ledState sketInvPx(ledState frame, byte column, byte level) {
-  return (frame ^ (1 << ((LEVELS * column) + level)));
-}
-
-//Test if a single pixel is set
-boolean sketTstPx(ledState frame, byte column, byte level) {
-  return (frame & (1 << ((LEVELS * column) + level)));
-}
-
-// Column operations
-//==================
-//Set all pixels in a column
-ledState sketSetCol(ledState frame, byte column) {
-  return (frame | (((1 << LEVELS) - 1) << (LEVELS * column))); // ((1 << LEVELS) - 1) = 0xF
-}
-
-//Clear all pixels in a column
-ledState sketClrCol(ledState frame, byte column) {
-  return (frame & ~(((1 << LEVELS) - 1) << (LEVELS * column)));
-}
-
-//Invert all pixels in a column
-ledState sketInvCol(ledState frame, byte column) {
-  return (frame ^ (((1 << LEVELS) << (LEVELS * column))));
-}
-
-//Insert a column
-ledState sketInsCol(ledState frame, byte column, byte pattern) {
-  return (frame &
-          (~(((1 << LEVELS)            << (LEVELS * column))) |
-            (((1 << LEVELS) & pattern) << (LEVELS * column))));
-}
-
-//Test if any pixel in a column is set
-boolean sketTstCol(byte column) {
-  return (frame & (((1 << LEVELS) << (LEVELS * column))));
-}
-
-// Level operations
-//=================
-//Set all pixels in a level
-ledState sketSetLev(ledState frame, byte level) {
-  return (frame | (LED_STATE_LEVEL_0 << level));
-}
-
-//Clear all pixels in a level
-ledState sketClrLev(ledState frame, byte level) {
-  return (frame & ~(LED_STATE_LEVEL_0 << level));
-}
+// Animation
+//==========
+ledState bounceAnimation(ledState frame) {
+  //Variables
+  int     frameCount = 150;                           //150 frames ~10s
+  boolean xDirection = true;                          //True = positive direction
+  boolean yDirection = true;                          //True = positive direction
+  boolean zDirection = true;                          //True = positive direction
+  ledState head  = 0x0040000000000000;
+  ledState tail0 = 0x0000000000000000;
+  ledState tail1 = 0x0000000000000000;
   
-//Invert all pixels in a level
-ledState sketInvLev(ledState frame, byte level) {
-  return (frame ^ (LED_STATE_LEVEL_0 << level));
-}
+  while (head|tail0|tail1) {                          //loop as long as there is anything to display
 
-//Test if any pixel in a level is set
-boolean sketTstLev(ledState frame, byte level) {
-  return (frame & (LED_STATE_LEVEL_0 << level));
-}
+    //Bounce off outside walls
+    if (frameCount--) {                               //stop bouncing when animation is over
+      if (head & 0x000000000000FFFF) {xDirection = true;}   //bounce off left wall
+      if (head & 0xFFFF000000000000) {xDirection = false;}  //bounce off right wall
 
-// Buffer operations
-//==================
-//Set all pixels
-ledState sketSetBuf() {
-  return LED_STATE_ALL_ON;
-}
+      if (head & 0x000F000F0000000F) {yDirection = true;}   //bounce off front wall
+      if (head & 0xF000F000F000F000) {yDirection = false;}  //bounce off back wall
+      
+      if (head & 0x1111111111111111) {zDirection = true;}   //bounce off ceiling
+      if (head & 0x8888888888888888) {zDirection = false;}  //bounce off floor
+    }
+    
+    //Update tail
+    tail1 = tail0;
+    tail0 = head;
 
-//Clear all pixels
-ledState sketClrBuf() {
-  return LED_STATE_ALL_OFF;
-}
+    //Update head
+    if (xDirection) {head = sketShiftX(head);}
+    else            {head = sketUnshiftX(head);}
+      
+    if (yDirection) {head = sketShiftY(head);}
+    else            {head = sketUnshiftY(head);}
+      
+    if (yDirection) {head = sketShiftZ(head);}
+    else            {head = sketUnshiftZ(head);}
+      
+    //Draw new frame
+    dispQueueFrame(head|tail0|tail1);
+  }
 
-//Invert all pixels
-ledState sketInvBuf(ledState frame) {
-  return ~frame;
-}
-
-//Test if any pixel in the buffer is set
-boolean sketTstBuf(ledState frame) {
-  return frame;
-}
-
-// Shift operations
-//=================
-//Shift all pixels one position in X direction
-ledState  sketShiftX(ledState frame) {
-  return (frame << (LEVELS*LEVELS));
-}
-
-//Shift all pixels one position in opposite X direction
-ledState  sketUnshiftX(ledState frame) {
-  return (frame >> (LEVELS*LEVELS));
-}
-
-//Shift all pixels one position in Y direction
-ledState  sketShiftY(ledState frame) {
-  return ((frame << LEVELS) & ~LED_STATE_SLICE_Y0);
-}
-
-//Shift all pixels one position in opposite Y direction
-ledState  sketUnshiftY(ledState frame) {
-  return ((frame & ~LED_STATE_SLICE_Y0) >> LEVELS);
- }
-
-//Shift all pixels one position in Z direction
-ledState  sketShiftZ(ledState frame) {
-  return ((frame << 1) & ~LED_STATE_LEVEL_0);
-}
-
-//Shift all pixels one position in opposite Z direction
-ledState  sketUnshiftZ(ledState frame) {
-  return ((frame & ~LED_STATE_LEVEL_0) >> 1);
+  //Draw last (empty) frame
+  dispQueueFrame(LED_STATE_ALL_OFF);
+   
+  return (frame);
 }

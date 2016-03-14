@@ -75,6 +75,10 @@ typedef unsigned long long ledState;
 #define LEVELS             4
 #define COLUMNS            (LEVELS * LEVELS)
 
+// Framerate
+//==========
+#define FRAMERATE       15                  //frames per second         
+
 // Pin definitions
 //================
 #define PL3                7    //level 3                   7 (PD7)
