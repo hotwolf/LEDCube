@@ -77,7 +77,7 @@ typedef unsigned long long ledState;
 
 // Framerate
 //==========
-#define FRAMERATE       15                  //frames per second         
+#define FRAMERATE       4                  //frames per second         
 
 // Pin definitions
 //================

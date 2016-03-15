@@ -180,7 +180,7 @@ ledState  sketShiftY(ledState frame) {
 
 //Shift all pixels one position in opposite Y direction
 ledState  sketUnshiftY(ledState frame) {
-  return ((frame & ~LED_STATE_SLICE_Y0) >> LEVELS);
+  return ((frame & ~LED_STATE_LEVEL_0) >> 1);
  }
 
 //Shift all pixels one position in Z direction

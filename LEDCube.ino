@@ -85,12 +85,37 @@ void setup() {
 
      //Enable interrupts
      interrupts();
+
+   frame = 0x8000080000800008;
+   dispQueueFrame(frame);
+   frame = sketUnshiftZ(frame);            //move frame up
+
+
 }
 
 // Application loop
 //=================
 void loop() {
 
-  frame = txtDisplay (frame, "Hello World!");
+  //dispQueueFrame(0x8000080000800008);
+  //dispQueueFrame(0x0000880000880000);
+  //dispQueueFrame(0x0000008888000000);
+  //dispQueueFrame(0x0008008008008000);
+  //dispQueueFrame(0x0080008008000800);
+  //dispQueueFrame(0x0800080000800080);
+
+   frame = 0x8000080000800008;
+   dispQueueFrame(frame);
+   frame = sketUnshiftZ(frame);            //move frame up
+
+
+  //dispQueueFrame(0x000000000000000F);
+  //dispQueueFrame(0x00000000000000F0);
+  //dispQueueFrame(0x0000000000000F00);
+  //dispQueueFrame(0x000000000000F000);
+
+  //frame = txtDisplay (frame, "Hello World!");
+
+  //threadAnimation(0);
 
 }

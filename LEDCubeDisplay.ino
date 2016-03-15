@@ -71,7 +71,7 @@
 // General definitions
 //====================
 //Framerate
-#define SUBFRAMES        4                  //subframes per frame
+#define SUBFRAMES       60/FRAMERATE                  //subframes per frame
                                             
 //FIFI depth                                
 #define FIFODEPTH       16                  //number of FIFO entries
@@ -88,12 +88,16 @@ byte            columnCount   = 0;          //current column (display inactive i
 byte            subframeCount = SUBFRAMES;  //current subframe
 
 //Temporary buffers
-ledState        currentFrame = 0;           //current frame
+ledState        currentFrame = 0x0123456789ABCDEF;           //current frame
 byte            nextPortD    = 0;           //column buffer 
 
 // Setup routine
 //==============
 void dispSetup() {
+  //Initialize digital pin 13 as an output.
+  pinMode(13, OUTPUT);
+  digitalWrite(13, LOW);    // turn the LED off by making the voltage LOW
+  
   //Ports and shift registers
   PORTD =                OE;                //disable shift register outputs
   DDRD  = L3|L2|L1|L0|DS|OE|ST|SH;          //set entire port to output
@@ -114,7 +118,7 @@ void dispSetup() {
   TIMSK2 = (1 << OCIE2A);                   //enable output compare A interrupt
 
   //Power modes
-  power_timer2_disable();                   //make sure timer2 is powered up
+  power_timer2_enable();                    //make sure timer2 is powered up
   set_sleep_mode(SLEEP_MODE_IDLE);          //use idle mode
   sleep_enable();                           //enable sleep instruction
 }
@@ -144,6 +148,9 @@ void dispQueueFrame(ledState frame) {
 // Interrupt Service Routine
 //==========================
 ISR(TIMER2_COMPA_vect){                     //timer2 output compare A interrupt
+
+  digitalWrite(13, HIGH);   // turn the LED on (HIGH is the voltage level)
+  
   //Local Variables
   byte    tmpOut;
 
@@ -157,7 +164,7 @@ ISR(TIMER2_COMPA_vect){                     //timer2 output compare A interrupt
   columnCount++;                            //increment column counter  
   if (columnCount < COLUMNS) {              //check for end of subframe
     //Determine next column pattern in sub-frame
-    nextPortD = (((currentFrame >> (4*(columnCount-1))) & 0xF0) | ST);//update column buffer
+    nextPortD = ((~(currentFrame >> (4*(columnCount-1))) & 0xF0) | ST);//update column buffer
   } else {       
     //Subframe is complete
     columnCount = 0;                        //reset column counter
@@ -177,9 +184,12 @@ ISR(TIMER2_COMPA_vect){                     //timer2 output compare A interrupt
     }
 
     //Determine next column pattern in sub-frame
-    nextPortD = (((currentFrame << 4) & 0xF0) | ST);//update column buffer
+    nextPortD = ((~(currentFrame << 4) & 0xF0) | ST);//update column buffer
 
     //assert shift register input
     PORTD |= DS;                              //assert DS
   }
+
+  digitalWrite(13, LOW);   // turn the LED off (LOW is the voltage level)
+
 }

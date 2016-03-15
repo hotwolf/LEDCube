@@ -68,29 +68,32 @@
 
 // Look-up table
 //===================
-const ledState spinner[]PROGMEM = {0x8000080000800008,
-                                   0x0000880000880000,
-                                   0x0000008800880000,
-                                   0x0008008008008000,
-                                   0x0080008008000800,
-                                   0x0800080000800080};
+//const ledState spinner[6]PROGMEM = {0x8000080000800008,
+const ledState spinner[6]        = {0x8000080000800008,
+                                    0x0000880000880000,
+                                    0x0000008888000000,
+                                    0x0008008008008000,
+                                    0x0080008008000800,
+                                    0x0800080000800080};
 
 // Animation
 //==========
 ledState threadAnimation(ledState frame) {
-// ledState bounce(ledState frame) {
-  //Variables
-  byte spinCount = 30;                        //number of half spins
-
   //Limit duration
-  while (spinCount--) {                       //repeat for a fixxed duration
+    for (int j=0; j<30; j++) {               //6 steps for half a spin
 
     //Animate half a spin
-    for (byte i=0; i<6; i++) {                //6 steps for half a spin
+    for (int i=0; i<6; i++) {                //6 steps for half a spin
       frame = sketUnshiftZ(frame);            //move frame up
       frame |= spinner[i];                    //insert spinner
       dispQueueFrame(frame);                  //draw frame
     }
+    //dispQueueFrame(spinner[0]);
+    //dispQueueFrame(spinner[1]);
+    //dispQueueFrame(spinner[2]);
+    //dispQueueFrame(spinner[3]);
+    //dispQueueFrame(spinner[4]);
+    //dispQueueFrame(spinner[5]);
   }
 
   return (frame);
