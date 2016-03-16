@@ -73,11 +73,11 @@ typedef unsigned long long ledState;
 // General definitions
 //====================
 #define LEVELS             4
-#define COLUMNS            (LEVELS * LEVELS)
+#define COLUMNS            16
 
 // Framerate
 //==========
-#define FRAMERATE       4                  //frames per second         
+#define FRAMERATE          8    //frames per second         
 
 // Pin definitions
 //================
@@ -103,40 +103,68 @@ typedef unsigned long long ledState;
 #define ST                  (1 << PST)
 #define SH                  (1 << PSH)
 
-// LED patterns
-//=============
-#define LED_STATE_MASK      ((1 << (LEVELS * COLUMNS)) - 1)
-#define LED_STATE_ALL_ON    LED_STATE_MASK 
-#define LED_STATE_ALL_OFF   0
-#define LED_STATE_LEVEL_0   (LED_STATE_MASK & (((((((((((((((((((((((((((((((1  << LEVELS) |\
-                                                                             1) << LEVELS) |\
-                                                                             1) << LEVELS) |\
-                                                                             1) << LEVELS) |\
-                                                                             1) << LEVELS) |\
-                                                                             1) << LEVELS) |\
-                                                                             1) << LEVELS) |\
-                                                                             1) << LEVELS) |\
-                                                                             1) << LEVELS) |\
-                                                                             1) << LEVELS) |\
-                                                                             1) << LEVELS) |\
-                                                                             1) << LEVELS) |\
-                                                                             1) << LEVELS) |\
-                                                                             1) << LEVELS) |\
-                                                                             1) << LEVELS) |\
-                                                                             1) << LEVELS))
-#define LED_STATE_LEVEL_1   (LED_STATE_LEVEL_0 << 1)
-#define LED_STATE_LEVEL_2   (LED_STATE_LEVEL_0 << 2)
-#define LED_STATE_LEVEL_3   (LED_STATE_LEVEL_0 << 3)
-#define LED_STATE_SLICE_Y0  (LED_STATE_MASK & ((((((((((((1 << LEVELS) - 1)  << (LEVELS * LEVELS)) | \
-                                                         (1 << LEVELS) - 1)) << (LEVELS * LEVELS)) | \
-                                                         (1 << LEVELS) - 1)) << (LEVELS * LEVELS)) | \
-                                                         (1 << LEVELS) - 1)) << (LEVELS * LEVELS)))
-
+// LED patterns               
+//=============             //FEDCBA9876543210 
+#define LED_STATE_MASK      0xFFFFFFFFFFFFFFFF
+#define LED_STATE_ALL_ON    0xFFFFFFFFFFFFFFFF
+#define LED_STATE_ALL_OFF   0x0000000000000000
+                            //FEDCBA9876543210
+#define LED_STATE_L0        0x1111111111111111
+#define LED_STATE_L1        0x2222222222222222
+#define LED_STATE_L2        0x4444444444444444
+#define LED_STATE_L3        0x8888888888888888
+                            //FEDCBA9876543210
+#define LED_STATE_C0        0x000000000000000F
+#define LED_STATE_C1        0x00000000000000F0
+#define LED_STATE_C2        0x0000000000000F00
+#define LED_STATE_C3        0x000000000000F000
+#define LED_STATE_C4        0x00000000000F0000
+#define LED_STATE_C5        0x0000000000F00000
+#define LED_STATE_C6        0x000000000F000000
+#define LED_STATE_C7        0x00000000F0000000
+#define LED_STATE_C8        0x0000000F00000000
+#define LED_STATE_C9        0x000000F000000000
+#define LED_STATE_C10       0x00000F0000000000
+#define LED_STATE_C11       0x0000F00000000000
+#define LED_STATE_C12       0x000F000000000000
+#define LED_STATE_C13       0x00F0000000000000
+#define LED_STATE_C14       0x0F00000000000000
+#define LED_STATE_C15       0xF000000000000000
+                            //FEDCBA9876543210
+#define LED_STATE_X0        0x000000000000FFFF
+#define LED_STATE_X1        0x00000000FFFF0000
+#define LED_STATE_X2        0x0000FFFF00000000
+#define LED_STATE_X3        0xFFFF000000000000
+                            //FEDCBA9876543210
+#define LED_STATE_Y0        0x000F000F000F000F
+#define LED_STATE_Y1        0x00F000F000F000F0
+#define LED_STATE_Y2        0x0F000F000F000F00
+#define LED_STATE_Y3        0xF000F000F000F000
+                            //FEDCBA9876543210
+#define LED_STATE_Z0        0x1111111111111111
+#define LED_STATE_Z1        0x2222222222222222
+#define LED_STATE_Z2        0x4444444444444444
+#define LED_STATE_Z3        0x8888888888888888
 
 // Macro definitions
 //==================
+//Select single pixel
+#define LED_STATE_XYZ(x,y,z) (1<<((16*x)+(4*y)+z))
+
+//Shift in X direction
+#define LED_STATE_SHIFT_X(frame)   ((frame<<16)&~LED_STATE_X0)
+#define LED_STATE_UNSHIFT_X(frame) ((frame>>16)&~LED_STATE_X3)
+
+//Shift in Y direction
+#define LED_STATE_SHIFT_Y(frame)   ((frame<<4)&~LED_STATE_Y0)
+#define LED_STATE_UNSHIFT_Y(frame) ((frame>>4)&~LED_STATE_Y3)
+
+//Shift in Z direction
+#define LED_STATE_SHIFT_Y(frame)   ((frame<<1)&~LED_STATE_Z0)
+#define LED_STATE_UNSHIFT_Y(frame) ((frame>>1)&~LED_STATE_Z3)
+
 //Wait for any interrupt
-#define wait_for_interrupt()                     \
+#define WAIT_FOR_INTERRUPT()                     \
 do {                                             \
   __asm__ __volatile__ ( "sei" "\n\t" :: );      \
   __asm__ __volatile__ ( "sleep" "\n\t" :: );    \

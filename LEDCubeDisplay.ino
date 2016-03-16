@@ -71,7 +71,7 @@
 // General definitions
 //====================
 //Framerate
-#define SUBFRAMES       60/FRAMERATE                  //subframes per frame
+#define SUBFRAMES       60/FRAMERATE        //subframes per frame
                                             
 //FIFI depth                                
 #define FIFODEPTH       16                  //number of FIFO entries
@@ -88,15 +88,15 @@ byte            columnCount   = 0;          //current column (display inactive i
 byte            subframeCount = SUBFRAMES;  //current subframe
 
 //Temporary buffers
-ledState        currentFrame = 0x0123456789ABCDEF;           //current frame
+ledState        currentFrame = 0;           //current frame
 byte            nextPortD    = 0;           //column buffer 
 
 // Setup routine
 //==============
 void dispSetup() {
-  //Initialize digital pin 13 as an output.
-  pinMode(13, OUTPUT);
-  digitalWrite(13, LOW);    // turn the LED off by making the voltage LOW
+  //Initialize on-board LED (pin 13)
+  pinMode(13, OUTPUT);                      //enable LED output
+  digitalWrite(13, LOW);                    //turn LED off
   
   //Ports and shift registers
   PORTD =                OE;                //disable shift register outputs
@@ -125,6 +125,7 @@ void dispSetup() {
 
 // Queue frame
 //============
+//Queue single frame
 void dispQueueFrame(ledState frame) {
   //Copy new frame into FIFO buffer
   fifo[fifoIn] = frame;
@@ -134,8 +135,8 @@ void dispQueueFrame(ledState frame) {
 
   //Wait until there is room in the queue
   while(((fifoOut-fifoIn)%FIFODEPTH) == 1) {//repeat as long as fifo is empty
-     wait_for_interrupt();                 //wait for anything to happen
-     noInterrupts();                      //disable interrupts
+     WAIT_FOR_INTERRUPT();                  //wait for anything to happen
+     noInterrupts();                        //disable interrupts
   }
 
   //Advance in-index
@@ -145,11 +146,18 @@ void dispQueueFrame(ledState frame) {
   interrupts();                             //enable interrupts
 }
 
+//Queue frame multiple (n) times
+void dispQueueFrames(ledState frame, int n) {
+  while (n--) {
+    dispQueueFrame(frame);
+  }
+}
+
 // Interrupt Service Routine
 //==========================
 ISR(TIMER2_COMPA_vect){                     //timer2 output compare A interrupt
 
-  digitalWrite(13, HIGH);   // turn the LED on (HIGH is the voltage level)
+  digitalWrite(13, HIGH);                   //turn LED onduring the execution of the ISR
   
   //Local Variables
   byte    tmpOut;
@@ -187,9 +195,9 @@ ISR(TIMER2_COMPA_vect){                     //timer2 output compare A interrupt
     nextPortD = ((~(currentFrame << 4) & 0xF0) | ST);//update column buffer
 
     //assert shift register input
-    PORTD |= DS;                              //assert DS
+    PORTD |= DS;                            //assert DS
   }
 
-  digitalWrite(13, LOW);   // turn the LED off (LOW is the voltage level)
+  digitalWrite(13, LOW);                    //turn LED off
 
 }

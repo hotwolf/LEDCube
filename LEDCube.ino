@@ -85,37 +85,28 @@ void setup() {
 
      //Enable interrupts
      interrupts();
-
-   frame = 0x8000080000800008;
-   dispQueueFrame(frame);
-   frame = sketUnshiftZ(frame);            //move frame up
-
-
 }
 
 // Application loop
 //=================
 void loop() {
 
-  //dispQueueFrame(0x8000080000800008);
-  //dispQueueFrame(0x0000880000880000);
-  //dispQueueFrame(0x0000008888000000);
-  //dispQueueFrame(0x0008008008008000);
-  //dispQueueFrame(0x0080008008000800);
-  //dispQueueFrame(0x0800080000800080);
+  //Display text
+  //frame = txtDisplay (frame, "LEDCube");
 
-   frame = 0x8000080000800008;
-   dispQueueFrame(frame);
-   frame = sketUnshiftZ(frame);            //move frame up
-
-
-  //dispQueueFrame(0x000000000000000F);
-  //dispQueueFrame(0x00000000000000F0);
-  //dispQueueFrame(0x0000000000000F00);
-  //dispQueueFrame(0x000000000000F000);
-
-  //frame = txtDisplay (frame, "Hello World!");
-
-  //threadAnimation(0);
-
+  //Show simple animation
+  //Set LEDs
+  for (int i=0; i<96; i++) {
+    //Show frame
+    dispQueueFrame(frame);
+    //Shift frame
+    frame = (frame << 1) | 1;
+  }
+  //Clear LEDs
+  for (int i=0; i<96; i++) {
+    //Show frame
+    dispQueueFrame(frame);
+    //Shift frame
+    frame = (frame << 1);
+  }
 }
