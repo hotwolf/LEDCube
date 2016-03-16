@@ -84,8 +84,8 @@ unsigned int    fifoIn   = 0;               //index of next free cell in FIFO bu
 unsigned int    fifoOut  = 0;               //index of oldest entry in FIFO buffer
                                             // FIFO is empty if (fifoIn == fifoOut)
 //Display state
-int             columnCount   = 0;          //current column (display inactive if (column < 0)
-int             subframeCount = SUBFRAMES;  //current subframe
+byte             columnCount   = 0;          //current column (display inactive if (column < 0)
+byte             subframeCount = SUBFRAMES;  //current subframe
 
 //Temporary buffers
 ledState        currentFrame = 0xFEDCBA9876543210;           //current frame
@@ -147,7 +147,7 @@ void dispQueueFrame(ledState frame) {
 }
 
 //Queue frame multiple (n) times
-void dispQueueFrames(ledState frame, int n) {
+void dispQueueFrames(ledState frame, byte n) {
   while (n--) {
     dispQueueFrame(frame);
   }

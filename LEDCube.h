@@ -160,8 +160,8 @@ typedef unsigned long long int ledState;
 #define LED_STATE_UNSHIFT_Y(frame) ((frame>>4)&~LED_STATE_Y3)
 
 //Shift in Z direction
-#define LED_STATE_SHIFT_Y(frame)   ((frame<<1)&~LED_STATE_Z0)
-#define LED_STATE_UNSHIFT_Y(frame) ((frame>>1)&~LED_STATE_Z3)
+#define LED_STATE_SHIFT_Z(frame)   ((frame<<1)&~LED_STATE_Z0)
+#define LED_STATE_UNSHIFT_Z(frame) ((frame>>1)&~LED_STATE_Z3)
 
 //Wait for any interrupt
 #define WAIT_FOR_INTERRUPT()                     \
@@ -171,4 +171,3 @@ do {                                             \
 } while(0)
 
 #endif
-

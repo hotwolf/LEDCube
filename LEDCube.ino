@@ -85,31 +85,30 @@ void setup() {
 
      //Enable interrupts
      interrupts();
-
-     //dispQueueFrame(0x0123456789ABCDEF);
-
 }
 
 // Application loop
 //=================
 void loop() {
 
-  //Display text
-  frame = txtDisplay (frame, "LEDCube");
-
   //Show simple animation
-  //Set LEDs
-  for (int i=0; i<80; i++) {
+  //Set all LEDs
+  for (int i=0; i<70; i++) {
     //Show frame
     dispQueueFrames(frame, FRAMERATE>>1);
     //Shift frame
     frame = (frame << 1) | 1;
   }
-  //Clear LEDs
-  for (int i=0; i<80; i++) {
+  //Clear all LEDs
+  for (int i=0; i<70; i++) {
     //Show frame
     dispQueueFrames(frame, FRAMERATE>>1);
     //Shift frame
     frame = (frame << 1);
   }
+
+  //Display text
+  frame = txtPrint(frame, "LEDCube");
+
+
 }
