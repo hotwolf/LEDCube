@@ -245,7 +245,7 @@ ledState txtShiftAndAppend(ledState frame, unsigned int pattern) {
             ((0x000F & patternFrame) << (15*4)));  //C15
   
   //Queue frame
-  dispQueueFrames(frame, FRAMERATE); //display each char for about 2 seconds
+  dispQueueFrames(frame, 1*FRAMERATE); //display each char for about 2 seconds
 
   //Return updated frame
   return frame;

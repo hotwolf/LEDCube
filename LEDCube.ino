@@ -91,24 +91,22 @@ void setup() {
 //=================
 void loop() {
 
+  //Display text
+  frame = txtPrint(frame, "LEDCube");
+
   //Show simple animation
   //Set all LEDs
-  for (int i=0; i<70; i++) {
+  for (int i=0; i<64; i++) {
     //Show frame
     dispQueueFrames(frame, FRAMERATE>>1);
     //Shift frame
     frame = (frame << 1) | 1;
   }
   //Clear all LEDs
-  for (int i=0; i<70; i++) {
+  for (int i=0; i<64; i++) {
     //Show frame
     dispQueueFrames(frame, FRAMERATE>>1);
     //Shift frame
     frame = (frame << 1);
   }
-
-  //Display text
-  frame = txtPrint(frame, "LEDCube");
-
-
 }
