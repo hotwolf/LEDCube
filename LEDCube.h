@@ -68,7 +68,7 @@
 
 // Type definitions
 //=================
-typedef unsigned long long ledState;
+typedef unsigned long long int ledState;
 
 // General definitions
 //====================

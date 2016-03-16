@@ -80,15 +80,15 @@
 //==========                                
 //FIFO                                      
 ledState        fifo[FIFODEPTH];            //FIFO buffer
-byte            fifoIn   = 0;               //index of next free cell in FIFO buffer
-byte            fifoOut  = 0;               //index of oldest entry in FIFO buffer
+unsigned int    fifoIn   = 0;               //index of next free cell in FIFO buffer
+unsigned int    fifoOut  = 0;               //index of oldest entry in FIFO buffer
                                             // FIFO is empty if (fifoIn == fifoOut)
 //Display state
-byte            columnCount   = 0;          //current column (display inactive if (column < 0)
-byte            subframeCount = SUBFRAMES;  //current subframe
+int             columnCount   = 0;          //current column (display inactive if (column < 0)
+int             subframeCount = SUBFRAMES;  //current subframe
 
 //Temporary buffers
-ledState        currentFrame = 0;           //current frame
+ledState        currentFrame = 0xFEDCBA9876543210;           //current frame
 byte            nextPortD    = 0;           //column buffer 
 
 // Setup routine
@@ -99,15 +99,15 @@ void dispSetup() {
   digitalWrite(13, LOW);                    //turn LED off
   
   //Ports and shift registers
-  PORTD =                OE;                //disable shift register outputs
+  PORTD = L3|L2|L1|L0|   OE;                //disable shift register outputs
   DDRD  = L3|L2|L1|L0|DS|OE|ST|SH;          //set entire port to output
-  for (byte i=0; i < 16; i++) {             //shift in 16 zeros
-    PORTD = OE|SH;                          //toggle shift clock
-    PORTD = OE;
+  for (int i=0; i < 16; i++) {              //shift in 16 zeros
+    PORTD = L3|L2|L1|L0|   OE|SH;           //toggle shift clock
+    PORTD = L3|L2|L1|L0|   OE;
   }
-  PORTD = DS|ST;                            //toggle storage clock, enable outputs, and assert shift input
-  PORTD = SH;                               //toggle shift clock
-  PORTD = 0;
+  PORTD = L3|L2|L1|L0|DS|   ST;             //toggle storage clock, enable outputs, and assert shift input
+  PORTD = L3|L2|L1|L0|DS|      SH;          //toggle shift clock
+  PORTD = L3|L2|L1|L0;
 
   //Timer 2
   TCCR2A = (1 << WGM21);                    //CTC mode, no pin toggling
@@ -180,10 +180,11 @@ ISR(TIMER2_COMPA_vect){                     //timer2 output compare A interrupt
 
     //Update frame
     if (fifoIn != fifoOut) {                //check if a new frame is in the queue
-      if (subframeCount == 1) {             //check for next to last subframe
-        //Fade frames on next to last subframe
-        currentFrame |= fifo[fifoOut];      //merge current and next frame
-      } else if (subframeCount == 0) {      //check for last subframe
+//      if (subframeCount == 1) {             //check for next to last subframe
+//        //Fade frames on next to last subframe
+//        currentFrame |= fifo[fifoOut];      //merge current and next frame
+//      } else 
+      if (subframeCount == 0) {             //check for last subframe
         //Switch to next frame
         subframeCount = SUBFRAMES;          //reset subframe counter
         currentFrame = fifo[fifoOut];       //get next frame

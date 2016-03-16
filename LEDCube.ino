@@ -68,7 +68,7 @@
 
 // Variables
 //==========
-ledState        frame = 0;           //current frame
+ledState        frame = 1;           //current frame
 
 
 // Setup routine
@@ -85,6 +85,9 @@ void setup() {
 
      //Enable interrupts
      interrupts();
+
+     //dispQueueFrame(0x0123456789ABCDEF);
+
 }
 
 // Application loop
@@ -92,20 +95,20 @@ void setup() {
 void loop() {
 
   //Display text
-  //frame = txtDisplay (frame, "LEDCube");
+  frame = txtDisplay (frame, "LEDCube");
 
   //Show simple animation
   //Set LEDs
-  for (int i=0; i<96; i++) {
+  for (int i=0; i<80; i++) {
     //Show frame
-    dispQueueFrame(frame);
+    dispQueueFrames(frame, FRAMERATE>>1);
     //Shift frame
     frame = (frame << 1) | 1;
   }
   //Clear LEDs
-  for (int i=0; i<96; i++) {
+  for (int i=0; i<80; i++) {
     //Show frame
-    dispQueueFrame(frame);
+    dispQueueFrames(frame, FRAMERATE>>1);
     //Shift frame
     frame = (frame << 1);
   }
