@@ -92,7 +92,7 @@ void setup() {
 void loop() {
 
   //Display text
-  frame = txtPrint(frame, "LEDCube");
+  frame = txtDispScr(frame, "LEDCube");
 
   //Show simple animation
   //Set all LEDs
