@@ -66,8 +66,6 @@
 
 // General definitions
 //====================
-//Framerate
-#define FRAME_REPETITION        4                   //frames per second         
 
 // Font look-up table
 //===================
@@ -231,45 +229,22 @@ const unsigned int txtFontTable[]PROGMEM = {0x0660, // 0x00 NUL  ....  ....  ...
                                             0x4242, // 0x7E ~    ..#.  ..##  #.#.  .##.
                                             0x0660};// 0x7F DEL  ..#.  .#..  ....  ....
 
-// Display text (back to front)
-//=============================
-ledState txtDispBtf (ledState frame, char *text) {
+// Print text
+//===========
+ledState txtPrint (ledState frame, char *text, char style) {
+  
   //Shift out previous content
-  //frame = txtClrBtf (frame);
+  //frame = txtClr (frame, style);
+  frame = txtClr (frame, TXT_BACK_TO_FRONT);
 
-  //Display string 
+ //Display string 
   while (*text != '\0') {
-    frame =  txtDispCharBtf (frame, *text);         //display character
-    text++;                                         //increment string pointer
+    frame =  txtPrintChar (frame, *text, style);     //display character
+    text++;                                          //increment string pointer
   }
   
   //Shift out text
-  frame = txtClrBtf (frame);
-
-  //Return updated frame
-  return frame;
-}
-
-// Display char (back to front)
-//=============================
-ledState txtDispCharBtf (ledState frame, char character) {
-  //Local variables
-  unsigned int fontPattern;
-
-  //Display empty slice
-  frame = sketUnshiftY(frame);                      //shift frame by one position
-  dispQueueFrames(frame, 4);                             //display frame
-  
-  //Lookup font pattern
-  fontPattern = txtFontTable[character & 0x7F];
-
-  //Display font pattern
-  frame = sketUnshiftY(frame);                      //shift frame by one position
-  frame |= (((0xF000 & fontPattern)            ) |  //C3
-            ((0x0F00 & fontPattern) << ( 5 * 4)) |  //C7
-            ((0x00F0 & fontPattern) << (10 * 4)) |  //C11
-            ((0x000F & fontPattern) << (15 * 4)));  //C11
-  dispQueueFrames(frame, 4);                          //display frame
+  frame = txtClr (frame, style);
 
   //Return updated frame
   return frame;
@@ -277,95 +252,90 @@ ledState txtDispCharBtf (ledState frame, char character) {
 
 // Shift out content
 //==================
-ledState txtClrBtf (ledState frame) {
-  while (frame) {                                   //check if any LEDs are lit
-    frame = sketUnshiftY(frame);                    //shift frame by one position
-    dispQueueFrames(frame, 4);                           //display frame
-  }
-  return frame;                                     //return empty frame
-}
-
-// Display text (scrol)
-//=====================
-ledState txtDispScr (ledState frame, char *text) {
-  //Shift out previous content
-  //frame = txtClrScr (frame);
-
-  //Display string 
-  while (*text != '\0') {
-    frame =  txtDispCharscr (frame, *text);         //display character
-    text++;                                         //increment string pointer
-  }
+ledState txtClr (ledState frame, char style) {
   
-  //Shift out text
-  frame = txtClrScr (frame);
-
-  //Return updated frame
-  return frame;
-}
-
-
-// Display char (scroll)
-//=============================
-ledState txtDispCharScr (ledState frame, char character) {
-  //Local variables
-  unsigned int fontPattern;
-
-  //Print one blank column 
-  frame = txtShiftScr (frame);                       //scroll by one column
-  dispQueueFrame(frame);                             //display frame
-  
-  //Lookup font pattern
-  fontPattern = txtFontTable[character & 0x7F];     //look up char pitmap
-
-  //Print first column
-  if (0xF000 & fontPattern) {                        //skip empty column
-    frame =  txtShiftScr (frame);                    //scroll by one column
-    frame |= (0xF000 & fontPattern)<<48;             //insert char column
-    dispQueueFrame(frame);                           //display frame
-  }
-
-  //Print second column
-  if (0x0F00 & fontPattern) {                        //skip empty column
-    frame =  txtShiftScr (frame);                    //scroll by one column
-    frame |= (0x0F00 & fontPattern)<<52;             //insert char column
-    dispQueueFrame(frame);                           //display frame
-  }
-
-  //Print third column
-  frame =  txtShiftScr (frame);                      //scroll by one column
-  frame |= (0x00F0 & fontPattern)<<56;               //insert char column
-  dispQueueFrame(frame);                             //display frame
-
-  //Print forth column
-  if (0x000F & fontPattern) {                        //skip empty column
-    frame =  txtShiftScr (frame);                    //scroll by one column
-    frame |= (0x000F & fontPattern)<<60;             //insert char column
-    dispQueueFrame(frame);                           //display frame
-  }
-  
-  return frame;
-}
-
-// Scroll text by one line (scroll)
-//=================================
-ledState txtShiftScr (ledState frame) {
-  return (0x0000_0000_0000_FFFF & (frame<<4))  |     //shift C0->C1->C2->C3
-  	     (0x000F_000F_000F_000F & (frame>>16)) |     //shift C12->C8->C4->C0
-  	     (0xFFFF_0000_0000_0000 & (frame>>4));       //shift C15->C14->C13->C12
-}
-
-// Scroll out content
-//===================
-ledState txtClrScr (ledState frame) {
-  while (frame) {                                    //check if any LEDs are lit
-    frame = txtShiftScr(frame);                      //shift frame by one position
-    dispQueueFrame(frame, 4);                        //display frame
-  }
+  if (style==TXT_SCROLL) {
+    while (frame & 0xFFFF000F000FFFFF) {          //check if any LEDs are lit
+      frame = txtScrollCol(frame);                   //shift frame by one position
+      dispQueueFrames(frame, 4);                     //display frame
+    }    
+  } else { 
+    while (frame) {                                  //check if any LEDs are lit
+      frame = sketUnshiftY(frame);                   //shift frame by one position
+      dispQueueFrames(frame, 4);                     //display frame
+    }
+  }  
   return frame;                                      //return empty frame
 }
 
+// Scroll text by one column
+//==========================
+ledState txtScrollCol (ledState frame) {
+  return (0x000000000000FFFF & (frame<<4))  |     //shift C0->C1->C2->C3
+         (0x000F000F000F000F & (frame>>16)) |     //shift C12->C8->C4->C0
+         (0xFFFF000000000000 & (frame>>4));       //shift C15->C14->C13->C12
+}
 
+// Display character
+//==================
+ledState txtPrintChar (ledState frame, char character, char style) {
+  //Local variables
+  unsigned int fontPattern;
 
+  //Lookup font pattern
+  fontPattern = pgm_read_word(&txtFontTable[character & 0x7F]);
 
+  if (style==TXT_SCROLL) {
+    //Print one blank column 
+    frame = txtScrollCol(frame);                       //shift frame by one position
+    dispQueueFrames(frame, 4);                         //display frame
+    frame = txtScrollCol(frame);                       //shift frame by one position
+    dispQueueFrames(frame, 4);                         //display frame
+
+    //Print first column
+    if (0xF000 & fontPattern) {                        //skip empty column
+      frame =  txtScrollCol (frame);                   //scroll by one column
+      frame |= (0xF000 & (ledState)fontPattern)<<48;   //insert char column
+      dispQueueFrames(frame, 4);                       //display frame
+    }
+
+    //Print second column
+    if (0x0F00 & fontPattern) {                        //skip empty column
+      frame =  txtScrollCol (frame);                   //scroll by one column
+      frame |= (0x0F00 & (ledState)fontPattern)<<52;   //insert char column
+      dispQueueFrames(frame, 4);                       //display frame
+    }
+
+    //Print third column
+    frame =  txtScrollCol (frame);                     //scroll by one column
+    frame |= (0x00F0 & (ledState)fontPattern)<<56;     //insert char column
+    dispQueueFrames(frame, 4);                         //display frame
+
+    //Print forth column
+    if (0x000F & fontPattern) {                        //skip empty column
+      frame =  txtScrollCol (frame);                   //scroll by one column
+      frame |= (0x000F & (ledState)fontPattern)<<60;   //insert char column
+      dispQueueFrames(frame, 4);                       //display frame
+    }
+  } else {  
+    //Display font pattern
+    frame = sketUnshiftY(frame);                      //shift frame by one position
+    frame |=  ((0xF000 & (ledState)fontPattern)            ) |  //C3
+              ((0x0F00 & (ledState)fontPattern) << ( 5 * 4)) |  //C7
+              ((0x00F0 & (ledState)fontPattern) << (10 * 4)) |  //C11
+              ((0x000F & (ledState)fontPattern) << (15 * 4)) ;  //C11
+     dispQueueFrames(frame, 4);                          //display frame
+
+    //Display empty slice
+    frame = sketUnshiftY(frame);                      //shift frame by one position
+    dispQueueFrames(frame, 4);                        //display frame
+    frame = sketUnshiftY(frame);                      //shift frame by one position
+    dispQueueFrames(frame, 4);                        //display frame
+    frame = sketUnshiftY(frame);                      //shift frame by one position
+    dispQueueFrames(frame, 4);                        //display frame
+  }
+  
+  //Return updated frame
+  return frame;
+}
 

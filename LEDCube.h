@@ -77,7 +77,7 @@ typedef unsigned long long int ledState;
 
 // Framerate
 //==========
-#define FRAMERATE          8    //frames per second         
+#define FRAMERATE          4    //frames per second         
 
 // Pin definitions
 //================
@@ -145,6 +145,11 @@ typedef unsigned long long int ledState;
 #define LED_STATE_Z1        0x2222222222222222
 #define LED_STATE_Z2        0x4444444444444444
 #define LED_STATE_Z3        0x8888888888888888
+
+//Text display styles
+//===================
+#define TXT_SCROLL        0                   //scroll text acreoss the front         
+#define TXT_BACK_TO_FRONT 1                   //shift text from back to front        
 
 // Macro definitions
 //==================

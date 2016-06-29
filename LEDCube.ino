@@ -68,8 +68,8 @@
 
 // Variables
 //==========
-ledState        frame = 1;           //current frame
-
+ledState        frame = 0;           //current frame
+int             randNum;
 
 // Setup routine
 //==============
@@ -80,8 +80,8 @@ void setup() {
      //Setup display driver
      dispSetup();
 
-     //Sketch routines
-     //sketSetup();
+     //Set random seed
+     randomSeed(analogRead(0));
 
      //Enable interrupts
      interrupts();
@@ -90,23 +90,22 @@ void setup() {
 // Application loop
 //=================
 void loop() {
+  //Pick a number
+  randNum = random();
 
   //Display text
-  frame = txtDispScr(frame, "LEDCube");
-
-  //Show simple animation
-  //Set all LEDs
-  for (int i=0; i<64; i++) {
-    //Show frame
-    dispQueueFrames(frame, FRAMERATE>>1);
-    //Shift frame
-    frame = (frame << 1) | 1;
+  if ((randNum % 2) == 0) {
+    frame = txtPrint(frame, "Projekttage2016", TXT_BACK_TO_FRONT);
+  } else {
+    frame = txtPrint(frame, "Projekttage 2016", TXT_SCROLL);
   }
-  //Clear all LEDs
-  for (int i=0; i<64; i++) {
-    //Show frame
-    dispQueueFrames(frame, FRAMERATE>>1);
-    //Shift frame
-    frame = (frame << 1);
-  }
+  
+  //Show animation
+  if ((randNum % 3) == 0) {
+    frame = fillAnimation(frame);
+  } else if ((randNum % 2) == 0) {
+    frame = bounceAnimation(frame);
+  } else {
+    frame = threadAnimation(frame);
+  } 
 }

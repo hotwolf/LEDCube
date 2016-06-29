@@ -70,15 +70,14 @@
 //==========
 ledState bounceAnimation(ledState frame) {
   //Variables
-  int     frameCount = 150;                           //150 frames ~10s
+  int     frameCount = 100;                           //150 frames ~10s
   boolean xDirection = true;                          //True = positive direction
   boolean yDirection = true;                          //True = positive direction
   boolean zDirection = true;                          //True = positive direction
-  ledState head  = 0x0040000000000000;
+  ledState head  = 0x0000000000400000;
   ledState tail0 = 0x0000000000000000;
-  ledState tail1 = 0x0000000000000000;
-  
-  while (head|tail0|tail1) {                          //loop as long as there is anything to display
+   
+  while (head|tail0) {                                //loop as long as there is anything to display
 
     //Bounce off outside walls
     if (frameCount--) {                               //stop bouncing when animation is over
@@ -93,8 +92,7 @@ ledState bounceAnimation(ledState frame) {
     }
     
     //Update tail
-    tail1 = tail0;
-    tail0 = head;
+     tail0 = head;
 
     //Update head
     if (xDirection) {head = sketShiftX(head);}
@@ -102,12 +100,12 @@ ledState bounceAnimation(ledState frame) {
       
     if (yDirection) {head = sketShiftY(head);}
     else            {head = sketUnshiftY(head);}
-      
-    if (yDirection) {head = sketShiftZ(head);}
+     
+    if (zDirection) {head = sketShiftZ(head);}
     else            {head = sketUnshiftZ(head);}
-      
+       
     //Draw new frame
-    dispQueueFrame(head|tail0|tail1);
+    dispQueueFrame(head|tail0);
   }
 
   //Draw last (empty) frame
